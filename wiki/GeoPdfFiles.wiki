@@ -1,0 +1,12 @@
+#summary Sample GEO-PDF Files.
+
+= Geo-PDF files for New Paltz and its environs =
+
+The following files will be used to test our abilities to follow a trail in a geo-pdf file. 
+
+#= Details =
+
+Files found here:
+  *  <A HREF="http://cs.newpaltz.edu/~pletcha/Images/NewPaltz-GeoPDF_v1-Base-and-Lines.pdf"> New Paltz 1.</A>
+  * <A HREF="http://cs.newpaltz.edu/~pletcha/Images/NewPaltz-GeoPDF_v2-Lines.pdf"> New Paltz 2.</A>
+  * <A HREF="http://cs.newpaltz.edu/~pletcha/Images/NewPaltz-GeoPDF_v3-Base.pdf"> New Paltz 2.</A>
