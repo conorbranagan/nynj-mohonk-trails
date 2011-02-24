@@ -1,5 +1,6 @@
 package edu.newpaltz.nynjmohonk;
 
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -21,12 +22,13 @@ public class MapViewActivity extends Activity {
 	private static ImageView i;
 	private static Bitmap mohonkBitmap;
 	float lastX = -1, lastY = -1;
+	//MapView view;
 	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentView(R.layout.mapview);
         mLinearLayout = new LinearLayout(this);
         i = new ImageView(this);
         Bitmap bit = ((BitmapDrawable)getResources().getDrawable(R.drawable.mohonk_map)).getBitmap();
@@ -37,7 +39,6 @@ public class MapViewActivity extends Activity {
         // Turn on the location updating
         turnOnLocation();
     }
-    
     public boolean onTouchEvent(MotionEvent e) {
     	int p = e.getPointerCount();
     	if(lastX == -1 && lastY == -1) {

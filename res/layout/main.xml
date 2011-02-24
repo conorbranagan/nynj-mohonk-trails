@@ -4,10 +4,16 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<TextView  
+	<TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="@string/hello"
     />
-<ImageView android:src="@drawable/mohonk_map_smaller" android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/imageView1"></ImageView>
+    <Button
+	android:id="@+id/launchMap"
+	android:text="View Map"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_centerHorizontal="true"
+	/>
 </LinearLayout>
