@@ -7,96 +7,77 @@ package edu.newpaltz.nynjmohonk;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 
-public class MapView extends View {
+public class MapView extends ImageView {
 	public static final float MIN_SCALE = 1f;
 	public static final float MAX_SCALE = 4f;
 	public static final int GROW = 0;
 	public static final int SHRINK = 1;
 	
 	public boolean isMultiTouch = false;
-	Matrix m = new Matrix();
-	private ImageView i = null;
+	private Matrix m;
+	private Bitmap myBitmap;
 	public float prevX = -1, prevY = -1, curX, curY, nextX, nextY, dx, dy;
 	public float distPre = -1, distCur, distMeasure; 
 	public float zoomIn = 1.01f, zoomOut = 0.01f, scale;
 	int mTouchSlop;
 	
-	public MapView(Context context) {
+	public MapView(Context context, Bitmap b){
 		super(context);
-		
+		myBitmap = b;
+		this.setImageBitmap(myBitmap);
+		this.setScaleType(ScaleType.MATRIX);
 		initialize();
 	}
-
-	public MapView(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-		
-		initialize();
-	}
-
-	public MapView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		
-		initialize();
-	}
-	public MapView(ImageView i){
-		super(i.getContext());
-		initialize();
-		this.i = i;
-		this.i.setScaleType(ScaleType.MATRIX);
-	}
+	
 	private void initialize(){
-		m = i.getImageMatrix();
-		i.setImageMatrix(m);
 		mTouchSlop = ViewConfiguration.getTouchSlop();
-		i.setScaleType(ScaleType.MATRIX);
+		setScaleType(ScaleType.MATRIX);
 	}
+	
     public float getScale(Matrix m) {
 		float[] values = new float[9];
-		 m.getValues(values);
+		this.getImageMatrix().getValues(values);
 		return values[Matrix.MSCALE_X];
     }
+    
+    @Override
 	public boolean onTouchEvent(MotionEvent event) {
-		super.onTouchEvent(event);
-		
-		int action = event.getAction() & MotionEvent.ACTION_MASK;
-		
+    	int action = event.getAction() & MotionEvent.ACTION_MASK;
+		    	
 		if(prevX == -1 && prevY == -1) {
-    		prevX = event.getX();
-    		prevY = event.getY();
+    		prevX = event.getX(0);
+    		prevY = event.getY(0);
     		return true;
 		}
-		//translation points
-		float dx = event.getX() - prevX;
-    	float dy = event.getY() - prevY;
+		
 		switch(action)
 		{
 			case MotionEvent.ACTION_DOWN:
 			{
 				invalidate();
-				
 				break;
 			}
 			case MotionEvent.ACTION_POINTER_DOWN:
 			{
 				isMultiTouch = true;
-				
-				invalidate();
-								
+				invalidate();		
 				break;
 			}
 			case MotionEvent.ACTION_POINTER_UP:
 			{
 				isMultiTouch = false;
-				
 				break;
 			}
 			case MotionEvent.ACTION_MOVE:
@@ -104,16 +85,19 @@ public class MapView extends View {
 				// First Finger's coordinates
 	    		curX = event.getX(0);
 	    		curY = event.getY(0);
-				if(isMultiTouch = false) {
+				if(!isMultiTouch) {
 					//translation if only one finger is detected
-					m = i.getImageMatrix();
-	    	        m.postTranslate(dx, dy);
-	    	        i.setImageMatrix(m);
-	    	        i.setScaleType(ScaleType.MATRIX);
-	    	        i.invalidate();
-				}
-				// Move to the else if two fingers are detected
-				else {
+					dx = curX - prevX;
+					dy = curY - prevY;
+					Log.d("DEBUG", "Moving x: " + dx + " and y: " + dy);
+					m = getImageMatrix();
+	    	        m.preTranslate(dx, dy);
+	    	        setScaleType(ScaleType.MATRIX);
+	    	        setImageMatrix(m);
+	    	        invalidate();
+				} else {
+					// Zoom if two fingers are detected
+					Log.d("DEBUG", "Zoom Touch Event");
 					// second Finger's coordinates
 		    		nextX = event.getX(1);
 		    		nextY = event.getY(1);
@@ -122,45 +106,49 @@ public class MapView extends View {
 		    		distCur = (float) Math.sqrt(Math.pow(nextX - curX, 2) + Math.pow(nextY - curY, 2));
 		    		distMeasure = distPre > -1 ? distCur - distPre : 0;
 		    		
+		    		m = getImageMatrix();
 		    		scale = getScale(m);
 			    	if (Math.abs(distMeasure) > mTouchSlop) {
 		    			int mode = distMeasure > 0 ? GROW : (distCur == distPre ? 2 : SHRINK);
 			    		switch (mode) {
-			    		case GROW: // detect fingers reverse pinching
-			    			zoom_In(scale);
-			    		break;
-			    		case SHRINK: // detect fingers pinching
-			    			zoom_Out(scale);
-			    		break;
+				    		case GROW: // detect fingers reverse pinching
+				    			zoom_In(scale);
+				    		break;
+				    		case SHRINK: // detect fingers pinching
+				    			zoom_Out(scale);
+				    		break;
+			    		}
 			    	}
 			    		
-			    	prevX = curX;
-				   	prevY = curY;
 					distPre = distCur;
-			    	return true;
-			    	}	
+			    }	
 				break;
-				}
 			}
 		}
-	return false;
+    	prevX = curX;
+	   	prevY = curY;
+	   	return true;
 	}
+    	
 	public void zoom_In(float scale) {
 		if(scale > MAX_SCALE) return; //keeps from zooming in too much
 		
+		m = this.getImageMatrix();
 		m.postScale(zoomIn, zoomIn, getWidth()/2f, getHeight()/2f);
-		i.setImageMatrix(m);
-        i.setScaleType(ScaleType.MATRIX);
-        i.invalidate();
+		setImageMatrix(m);
+        setScaleType(ScaleType.MATRIX);
+        invalidate();
 		return;
 	}
+	
 	public void zoom_Out(float scale) {
 		if(scale < MIN_SCALE) return; //keeps from zooming out too much
 		
+		m = this.getImageMatrix();
 		m.postScale(zoomOut, zoomOut, getWidth()/2f, getHeight()/2f);
-		i.setImageMatrix(m);
-        i.setScaleType(ScaleType.MATRIX);
-        i.invalidate();
+		setImageMatrix(m);
+        setScaleType(ScaleType.MATRIX);
+        invalidate();
 		return;
 	}
 }

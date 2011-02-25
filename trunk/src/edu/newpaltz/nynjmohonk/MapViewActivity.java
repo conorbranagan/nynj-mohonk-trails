@@ -18,27 +18,21 @@ import android.location.LocationManager;
 
 
 public class MapViewActivity extends Activity {
-	private static LinearLayout mLinearLayout;
-	private static ImageView i;
 	private static Bitmap mohonkBitmap;
 	float lastX = -1, lastY = -1;
-	//MapView view;
 	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.mapview);
-        mLinearLayout = new LinearLayout(this);
-        i = new ImageView(this);
         Bitmap bit = ((BitmapDrawable)getResources().getDrawable(R.drawable.mohonk_map)).getBitmap();
         mohonkBitmap = bit.copy(Bitmap.Config.RGB_565, true); // Copy bitmap (so it will be mutable)
-        i.setImageBitmap(mohonkBitmap); // Put the image on the screen
-        mLinearLayout.addView(i);
-        setContentView(mLinearLayout);
+        setContentView(new MapView(this, mohonkBitmap));
         // Turn on the location updating
         turnOnLocation();
     }
+    
+    /*
     public boolean onTouchEvent(MotionEvent e) {
     	int p = e.getPointerCount();
     	if(lastX == -1 && lastY == -1) {
@@ -73,6 +67,7 @@ public class MapViewActivity extends Activity {
 
         return true;
     }
+    */
     
     private void turnOnLocation() {
         // Turn on the LocationManager to figure out current location
