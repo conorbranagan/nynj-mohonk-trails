@@ -7,17 +7,13 @@ package edu.newpaltz.nynjmohonk;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.ImageView;
-import android.widget.ImageView.ScaleType;
 
 public class MapView extends ImageView {
 	public static final float MIN_SCALE = 1f;
@@ -33,17 +29,16 @@ public class MapView extends ImageView {
 	public float zoomIn = 1.01f, zoomOut = 0.01f, scale;
 	int mTouchSlop;
 	
-	public MapView(Context context, Bitmap b){
-		super(context);
-		myBitmap = b;
-		this.setImageBitmap(myBitmap);
-		this.setScaleType(ScaleType.MATRIX);
-		initialize();
+	public MapView(Context c, AttributeSet a) {
+		super(c, a);
+        initialize();
 	}
 	
 	private void initialize(){
-		mTouchSlop = ViewConfiguration.getTouchSlop();
-		setScaleType(ScaleType.MATRIX);
+		Bitmap bit = ((BitmapDrawable)getResources().getDrawable(R.drawable.mohonk_map_smaller)).getBitmap();
+        myBitmap = bit.copy(Bitmap.Config.RGB_565, true); // Copy bitmap (so it will be mutable)
+        this.setImageBitmap(myBitmap);
+		//mTouchSlop = ViewConfiguration.getTouchSlop();
 	}
 	
     public float getScale(Matrix m) {
@@ -66,13 +61,15 @@ public class MapView extends ImageView {
 		{
 			case MotionEvent.ACTION_DOWN:
 			{
-				invalidate();
+				curX = event.getX(0);
+				curY = event.getY(0);
+				//invalidate();
 				break;
 			}
 			case MotionEvent.ACTION_POINTER_DOWN:
 			{
 				isMultiTouch = true;
-				invalidate();		
+				//invalidate();		
 				break;
 			}
 			case MotionEvent.ACTION_POINTER_UP:
@@ -89,11 +86,11 @@ public class MapView extends ImageView {
 					//translation if only one finger is detected
 					dx = curX - prevX;
 					dy = curY - prevY;
-					Log.d("DEBUG", "Moving x: " + dx + " and y: " + dy);
+	    	        
 					m = getImageMatrix();
-	    	        m.preTranslate(dx, dy);
-	    	        setScaleType(ScaleType.MATRIX);
+	    	        m.postTranslate(dx, dy);
 	    	        setImageMatrix(m);
+	    	        setScaleType(ScaleType.MATRIX);
 	    	        invalidate();
 				} else {
 					// Zoom if two fingers are detected
@@ -101,7 +98,6 @@ public class MapView extends ImageView {
 					// second Finger's coordinates
 		    		nextX = event.getX(1);
 		    		nextY = event.getY(1);
-		    		
 		    		// figure out the distance in order to find which direction the fingers are moving
 		    		distCur = (float) Math.sqrt(Math.pow(nextX - curX, 2) + Math.pow(nextY - curY, 2));
 		    		distMeasure = distPre > -1 ? distCur - distPre : 0;
@@ -127,13 +123,14 @@ public class MapView extends ImageView {
 		}
     	prevX = curX;
 	   	prevY = curY;
+	   	super.onTouchEvent(event);
 	   	return true;
 	}
     	
 	public void zoom_In(float scale) {
 		if(scale > MAX_SCALE) return; //keeps from zooming in too much
 		
-		m = this.getImageMatrix();
+		m = getImageMatrix();
 		m.postScale(zoomIn, zoomIn, getWidth()/2f, getHeight()/2f);
 		setImageMatrix(m);
         setScaleType(ScaleType.MATRIX);
