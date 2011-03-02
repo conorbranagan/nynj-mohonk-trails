@@ -3,71 +3,24 @@ package edu.newpaltz.nynjmohonk;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Matrix;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ImageView.ScaleType;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 
 
 public class MapViewActivity extends Activity {
-	private static Bitmap mohonkBitmap;
 	float lastX = -1, lastY = -1;
 	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Bitmap bit = ((BitmapDrawable)getResources().getDrawable(R.drawable.mohonk_map)).getBitmap();
-        mohonkBitmap = bit.copy(Bitmap.Config.RGB_565, true); // Copy bitmap (so it will be mutable)
-        setContentView(new MapView(this, mohonkBitmap));
+        setContentView(R.layout.map_layout);
         // Turn on the location updating
-        turnOnLocation();
+        //turnOnLocation();
     }
-    
-    /*
-    public boolean onTouchEvent(MotionEvent e) {
-    	int p = e.getPointerCount();
-    	if(lastX == -1 && lastY == -1) {
-    		lastX = e.getX();
-    		lastY = e.getY();
-    		return true;
-    	}
-    	
-    	float dx = e.getX() - lastX;
-    	float dy = e.getY() - lastY;
-
-    	switch(e.getAction()) {
-    		case MotionEvent.ACTION_MOVE:
-    			if(p == 1) {
-	    	        Matrix m = i.getImageMatrix();
-	    	        m.postTranslate(dx, dy);
-	    	        i.setImageMatrix(m);
-	    	        i.setScaleType(ScaleType.MATRIX);
-	    	        i.invalidate();
-    			} else {
-    				// Multi-touch
-	    	        Matrix m = i.getImageMatrix();
-	    	        m.postScale((float).9, (float).9);
-	    	        i.setImageMatrix(m);
-	    	        i.setScaleType(ScaleType.MATRIX);
-	    	        i.invalidate();
-	    	    }
-    	       break;
-	    	}
-    	lastX = e.getX();
-    	lastY = e.getY();
-
-        return true;
-    }
-    */
     
     private void turnOnLocation() {
         // Turn on the LocationManager to figure out current location
