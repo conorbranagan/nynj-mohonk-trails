@@ -11,7 +11,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -19,42 +21,46 @@ import android.widget.ImageView;
 
 public class MapView extends ImageView {
 	public static final float MIN_SCALE = .2f;
-	public static final float MAX_SCALE = .9f;
+	public static final float MAX_SCALE = 1f;
 	public static final int GROW = 0;
 	public static final int SHRINK = 1;
 	
 	public boolean isMultiTouch = false, doMove = true;
 	private Matrix m;
 	private Bitmap myBitmap;
+	private Paint p;
 	public float prevX = -1, prevY = -1, curX, curY, nextX, nextY, dx, dy;
 	public float distPre = -1, distCur, distMeasure; 
 	public float zoomIn = 1.01f, zoomOut = 0.99f, scale;
+	public float circleX = 240, circleY = 389, circleRadius = 10;
+	private boolean firstDraw = true;
 	
 	public MapView(Context c, AttributeSet a) {
 		super(c, a);
-        initialize();
+		m = getImageMatrix();
+		m.setScale(1f, 1f);
+		setImageMatrix(m);
+		setScaleType(ScaleType.MATRIX);
+    	p = new Paint();
+    	p.setColor(Color.BLUE);
 	}
-	
-	private void initialize(){
-		Bitmap bit = ((BitmapDrawable)getResources().getDrawable(R.drawable.mohonk_map_smaller)).getBitmap();
-        myBitmap = bit.copy(Bitmap.Config.RGB_565, true); // Copy bitmap (so it will be mutable)
-        this.setImageBitmap(myBitmap);
-        m = getImageMatrix();
-        m.postScale(1, 1);
-	}
-	
-    public float getScale(Matrix m) {
+		
+    private float getScale(Matrix m) {
 		float[] values = new float[9];
 		this.getImageMatrix().getValues(values);
 		return values[Matrix.MSCALE_X];
     }
     
     @Override
-    public void onDraw(Canvas c) {
+    protected void onDraw(Canvas c) {
     	super.onDraw(c);
-    	Paint p = new Paint();
-    	p.setColor(Color.RED);
-    	c.drawCircle(10, 10, 10, p);
+    	if(myBitmap == null) {
+        	myBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ALPHA_8);
+    	}
+    	
+    	Canvas bitmapCanvas = new Canvas(myBitmap);
+    	bitmapCanvas.drawCircle(100, 100, 10, p);
+    	c.drawBitmap(myBitmap, getImageMatrix(), p);
     }
     
     @Override
@@ -95,19 +101,22 @@ public class MapView extends ImageView {
 				// First Finger's coordinates
 	    		curX = event.getX(0);
 	    		curY = event.getY(0);
-				if(!isMultiTouch && doMove) {
-					
-					//translation if only one finger is detected
-					dx = curX - prevX;
-					dy = curY - prevY;
-	    	        
-					m = getImageMatrix();
-	    	        m.postTranslate(dx, dy);
-	    	        
-	    	        
-	    	        setImageMatrix(m);
-	    	        setScaleType(ScaleType.MATRIX);
-	    	        invalidate();
+				if(!isMultiTouch) {			
+					if(doMove) {
+						//translation if only one finger is detected
+						dx = curX - prevX;
+						dy = curY - prevY;
+		    	        
+						m = getImageMatrix();
+		    	        m.postTranslate(dx, dy);
+		    	        
+		    	        //circleX += dx;
+		    	        //circleY += dy;
+		    	        
+		    	        setImageMatrix(m);
+		    	        setScaleType(ScaleType.MATRIX);
+		    	        invalidate();
+					}
 				} else {
 					// Zoom if two fingers are detected
 
@@ -120,7 +129,6 @@ public class MapView extends ImageView {
 		    		
 		    		m = getImageMatrix();
 		    		scale = getScale(m);
-		    		Log.d("DEBUG", "Distance is: " + distCur);
 	    			int mode = distMeasure > 0 ? GROW : (distCur == distPre ? 2 : SHRINK);
 		    		switch (mode) {
 			    		case GROW: // detect fingers reverse pinching
@@ -141,25 +149,32 @@ public class MapView extends ImageView {
 	   	return true;
 	}
     	
-	public void zoomIn(float scale, float dist) {
+	private void zoomIn(float scale, float dist) {
 		if(scale > MAX_SCALE) return; //keeps from zooming in too much
 		
 		m = getImageMatrix();
 		m.postScale(zoomIn, zoomIn, getWidth()/2f, getHeight()/2f);
-				
+		
+		circleRadius -= .01;
+		
 		setImageMatrix(m);
         setScaleType(ScaleType.MATRIX);
         invalidate();
 		return;
 	}
 	
-	public void zoomOut(float scale, float dist) {
+	private void zoomOut(float scale, float dist) {
 		if(scale < MIN_SCALE) return; //keeps from zooming out too much
+		
 		m = getImageMatrix();
 		m.postScale(zoomOut, zoomOut, getWidth()/2f, getHeight()/2f);
+		
+		circleRadius += .01;
+		
 		setImageMatrix(m);
         setScaleType(ScaleType.MATRIX);
         invalidate();
 		return;
 	}
+	
 }
