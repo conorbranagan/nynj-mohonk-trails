@@ -18,10 +18,13 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
+import android.view.animation.Animation.AnimationListener;
 
 public class MapView extends ImageView {
-	public static final float MIN_SCALE = .2f;
-	public static final float MAX_SCALE = 1f;
+	public static final float MIN_SCALE = .5f;
+	public static final float MAX_SCALE = 2f;
 	public static final int GROW = 0;
 	public static final int SHRINK = 1;
 	
@@ -31,8 +34,8 @@ public class MapView extends ImageView {
 	private Paint p;
 	public float prevX = -1, prevY = -1, curX, curY, nextX, nextY, dx, dy;
 	public float distPre = -1, distCur, distMeasure; 
-	public float zoomIn = 1.01f, zoomOut = 0.99f, scale;
-	public float circleX = 240, circleY = 389, circleRadius = 10;
+	public float zoomIn = 1.05f, zoomOut = 0.95f, scale;
+	public float circleX = 300, circleY = 300, circleRadius = 10;
 	private boolean firstDraw = true;
 	
 	public MapView(Context c, AttributeSet a) {
@@ -51,15 +54,28 @@ public class MapView extends ImageView {
 		return values[Matrix.MSCALE_X];
     }
     
+    private float getTransX(Matrix m) {
+		float[] values = new float[9];
+		this.getImageMatrix().getValues(values);
+		return values[Matrix.MTRANS_X];
+    }    
+  
+    private float getTransY(Matrix m) {
+		float[] values = new float[9];
+		this.getImageMatrix().getValues(values);
+		return values[Matrix.MTRANS_Y];
+    }    
+    
     @Override
     protected void onDraw(Canvas c) {
-    	super.onDraw(c);
+    	super.onDraw(c);    	
     	if(myBitmap == null) {
         	myBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ALPHA_8);
+    	} else {
+    		myBitmap.eraseColor(Color.TRANSPARENT); // Erase the bitmap
     	}
-    	
     	Canvas bitmapCanvas = new Canvas(myBitmap);
-    	bitmapCanvas.drawCircle(100, 100, 10, p);
+    	bitmapCanvas.drawCircle(circleX, circleY, circleRadius, p);
     	c.drawBitmap(myBitmap, getImageMatrix(), p);
     }
     
@@ -110,9 +126,6 @@ public class MapView extends ImageView {
 						m = getImageMatrix();
 		    	        m.postTranslate(dx, dy);
 		    	        
-		    	        //circleX += dx;
-		    	        //circleY += dy;
-		    	        
 		    	        setImageMatrix(m);
 		    	        setScaleType(ScaleType.MATRIX);
 		    	        invalidate();
@@ -148,6 +161,47 @@ public class MapView extends ImageView {
 	   	super.onTouchEvent(event);
 	   	return true;
 	}
+    
+    public void updateLocation(double longitude, double latitude) {
+    	Log.d("DEBUG", "location changed. redraw.");
+    	circleX += 1;
+    	circleY += 1;
+    	invalidate();
+    }
+    
+	// Translates imageview so that the current location (circle) is centered 
+    public void showCurrentLocation() {
+    	m = getImageMatrix();
+    	float xoffset = 230;
+    	float yoffset = 400;
+    	final float dx = -getTransX(m) - circleX * getScale(m) + xoffset;
+    	final float dy = -getTransY(m) - circleY * getScale(m) + yoffset;
+    	/*TranslateAnimation t = new TranslateAnimation(0, dy, 0, dx);
+    	t.initialize(getWidth(), getHeight(), getWidth(), getHeight());
+    	//t.setFillAfter(true);
+    	//t.setFillBefore(true)
+    	t.setDuration(1000);
+    	t.setAnimationListener(new AnimationListener() {
+    		@Override
+    		public void onAnimationEnd(Animation anim) {
+    			// Set the current x and y to our new location
+    			m = getImageMatrix();
+    			m.postTranslate(dx, dy);
+    			setImageMatrix(m);
+    			invalidate();
+    		}
+    		
+    		@Override
+			public void onAnimationRepeat(Animation anim) {	}
+
+			@Override
+			public void onAnimationStart(Animation anim) { }
+    	});
+    	this.startAnimation(t);
+    	*/
+    	m.postTranslate(dx, dy);
+    	invalidate();
+    }
     	
 	private void zoomIn(float scale, float dist) {
 		if(scale > MAX_SCALE) return; //keeps from zooming in too much
@@ -155,7 +209,7 @@ public class MapView extends ImageView {
 		m = getImageMatrix();
 		m.postScale(zoomIn, zoomIn, getWidth()/2f, getHeight()/2f);
 		
-		circleRadius -= .01;
+		circleRadius -= .05 * getScale(m);
 		
 		setImageMatrix(m);
         setScaleType(ScaleType.MATRIX);
@@ -169,7 +223,7 @@ public class MapView extends ImageView {
 		m = getImageMatrix();
 		m.postScale(zoomOut, zoomOut, getWidth()/2f, getHeight()/2f);
 		
-		circleRadius += .01;
+		circleRadius += .05 * getScale(m);
 		
 		setImageMatrix(m);
         setScaleType(ScaleType.MATRIX);
