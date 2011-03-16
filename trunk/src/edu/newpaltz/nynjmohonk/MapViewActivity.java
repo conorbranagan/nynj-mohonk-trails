@@ -25,7 +25,7 @@ public class MapViewActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_layout);
         // Show progress dialog until GPS location is found
-        d = ProgressDialog.show(this, "", "Waiting for GPS...");
+      //  d = ProgressDialog.show(this, "", "Waiting for GPS...");
         // Turn on the location updating
         turnOnLocation();
     }
@@ -70,9 +70,9 @@ public class MapViewActivity extends Activity {
         // Define a location listener and the events that go with it    
         LocationListener locationListener = new LocationListener() {
         	public void onLocationChanged(Location location) {
-        		if(d.isShowing()) {
+        	/*	if(d.isShowing()) {
         			d.hide();
-        		}
+        		}*/
             	m = (MapView)findViewById(R.id.map_image);
         		double longitude = location.getLongitude();
         		double latitude = location.getLatitude();
