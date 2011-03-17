@@ -11,16 +11,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
-import android.view.animation.Animation.AnimationListener;
 
 public class MapView extends ImageView {
 	public static final float MIN_SCALE = .5f;
@@ -36,7 +29,6 @@ public class MapView extends ImageView {
 	public float distPre = -1, distCur, distMeasure; 
 	public float zoomIn = 1.05f, zoomOut = 0.95f, scale;
 	public float circleX = 300, circleY = 300, circleRadius = 10;
-	private boolean firstDraw = true;
 	
 	public MapView(Context c, AttributeSet a) {
 		super(c, a);
@@ -162,10 +154,9 @@ public class MapView extends ImageView {
 	   	return true;
 	}
     
-    public void updateLocation(double longitude, double latitude) {
-    	Log.d("DEBUG", "location changed. redraw.");
-    	circleX += 1;
-    	circleY += 1;
+    public void updateLocation(float cx, float cy) {
+    	circleX = cx;
+    	circleY = cy;
     	invalidate();
     }
     
@@ -176,29 +167,6 @@ public class MapView extends ImageView {
     	float yoffset = 400;
     	final float dx = -getTransX(m) - circleX * getScale(m) + xoffset;
     	final float dy = -getTransY(m) - circleY * getScale(m) + yoffset;
-    	/*TranslateAnimation t = new TranslateAnimation(0, dy, 0, dx);
-    	t.initialize(getWidth(), getHeight(), getWidth(), getHeight());
-    	//t.setFillAfter(true);
-    	//t.setFillBefore(true)
-    	t.setDuration(1000);
-    	t.setAnimationListener(new AnimationListener() {
-    		@Override
-    		public void onAnimationEnd(Animation anim) {
-    			// Set the current x and y to our new location
-    			m = getImageMatrix();
-    			m.postTranslate(dx, dy);
-    			setImageMatrix(m);
-    			invalidate();
-    		}
-    		
-    		@Override
-			public void onAnimationRepeat(Animation anim) {	}
-
-			@Override
-			public void onAnimationStart(Animation anim) { }
-    	});
-    	this.startAnimation(t);
-    	*/
     	m.postTranslate(dx, dy);
     	invalidate();
     }

@@ -2,9 +2,13 @@ package edu.newpaltz.nynjmohonk;
 
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MenuInflater;
 import android.view.Menu;
@@ -15,19 +19,46 @@ import android.location.LocationManager;
 
 
 public class MapViewActivity extends Activity {
-	float lastX = -1, lastY = -1;
-	ProgressDialog d = null;
-	MapView m;
+	private ProgressDialog d = null;
+	private Map myMap;
+	private MapView myMapView;
+	private Handler mHandler = new Handler();
+	private double maxLatitude, minLatitude, maxLongitude, minLongitude, latPerPixel, lonPerPixel;
+	private LocationListener locationListener;
+	private AlertDialog outOfRangeAlert;
 	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+       
+        // Show the map view
         setContentView(R.layout.map_layout);
+        
+        // Get the Map object and a reference to the MapView
+        Intent i = getIntent();
+        myMap = (Map)i.getParcelableExtra("myMap");
+        myMapView = (MapView)findViewById(R.id.map_image);
+        
+        // Set the map image based on our map object
+        myMapView.setImageResource(R.drawable.mohonk_map); // TODO
+        // Max/min values are relative to the image and NOT to the numbers themselves
+        maxLongitude = myMap.getTrlon(); 
+        minLongitude = myMap.getBllon();
+        maxLatitude = myMap.getTrlat(); 
+        minLatitude = myMap.getTrlat(); 
+        latPerPixel = (Math.abs(maxLatitude - minLatitude)) / myMapView.getWidth();
+        lonPerPixel = (Math.abs(maxLongitude - minLongitude)) / myMapView.getHeight();
+        
         // Show progress dialog until GPS location is found
-      //  d = ProgressDialog.show(this, "", "Waiting for GPS...");
+        d = ProgressDialog.show(this, "", "Waiting for GPS...");
+        
         // Turn on the location updating
         turnOnLocation();
+        
+        // Start the timer for looking for a GPS
+        mHandler.postDelayed(mRemoveGPSWaiting, 60000); // 60 seconds: higher or lower?
+        
     }
     
 
@@ -41,17 +72,13 @@ public class MapViewActivity extends Activity {
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-    	m = (MapView)findViewById(R.id.map_image);
     	switch(item.getItemId()) {
     	case R.id.exit_map:
-    		
+    		// Exit the MapViewActivity
+    		finish();
     		break;
     	case R.id.current_location:
-    		if(m == null) {
-
-    		} else {
-    			m.showCurrentLocation();
-    		}
+    		myMapView.showCurrentLocation();
     		break;
     	}
     	return true;
@@ -60,7 +87,12 @@ public class MapViewActivity extends Activity {
     @Override
     public void onStop() {
     	super.onStop();
-    	finish();
+    	mHandler.removeCallbacks(mRemoveGPSWaiting);
+        LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.removeUpdates(locationListener);
+        d.dismiss();
+        outOfRangeAlert.dismiss();
+        finish();
     }
     
     private void turnOnLocation() {
@@ -68,17 +100,16 @@ public class MapViewActivity extends Activity {
         LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
         
         // Define a location listener and the events that go with it    
-        LocationListener locationListener = new LocationListener() {
+        locationListener = new LocationListener() {
         	public void onLocationChanged(Location location) {
-        	/*	if(d.isShowing()) {
+        		if(d.isShowing()) {
         			d.hide();
-        		}*/
-            	m = (MapView)findViewById(R.id.map_image);
+        		}
         		double longitude = location.getLongitude();
         		double latitude = location.getLatitude();
         		// In this method we want to update our BitMap to reflect the change in location
         		Log.d("DEBUG", "LOCATION CHANGED TO: " + longitude + ", " + latitude);
-        		m.updateLocation(longitude, latitude);
+        		updateMapLocation(longitude, latitude);
         	}
         	
         	public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -92,31 +123,57 @@ public class MapViewActivity extends Activity {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
     }
     
-    private void updateMapLocation(double longitude, double latitude) {
-    	/*
-    	 *  Uses longitude and latitude parameters to update our Mohonk map bitmap
-    	 *  
-    	 *  If we have 2 opposite corner points: bottom-left (bl), top-right (tr)
-    	 *  calculate:
-    	 *  	latPerPixel = (tr.latitude - bl.latitude) / (num pixels width)
-    	 *  	lonPerPixel = (tr.longitude - bl.longitude) / (num pixels height)
-    	 * 	
-    	 * For that, we can give the following pseudocode for this method:
-    	 * 		
-    	 * 		if(latitude >= bl.latitude && latitude <= tr.latitude && longitude >= bl.longitude && longitude <= bl.longitude) {
-    	 * 			// In range of our map
-    	 * 			numLatitudeIn = myPixel.latitude - bl.latitude
-    	 * 			numLongitudeIn = myPixel.longitude - bl.longitude
-    	 * 			myPixel.x = round(numLatitudeIn / latitudePerPixel) // Round to nearest whole
-    	 * 			myPixel.y = round(numLongitudeIn / longitudePerPixel) // Round to nearest whole
-    	 * 			// Plot this point and a set number of surrounding pixels
-    	 * 		} else {
-    	 * 			// Out of range.
-    	 * 		}
-    	 * 
-    	 * 
-    	 */
+    private void updateMapLocation(double lon, double lat) {
+    	if(inRange(lat, lon)) {
+    		// Calculate pixel point
+    		double numLatitudeIn = Math.abs(lat - minLatitude);
+    		double numLongitudeIn = Math.abs(lon - minLongitude);
+    		double cx = numLatitudeIn / latPerPixel;
+    		double cy = numLongitudeIn / lonPerPixel;
+    		myMapView.updateLocation((float)cx, (float)cy);
+    	} else {
+    		if(outOfRangeAlert == null) {
+        		// Out of range. Display a message.
+    			AlertDialog.Builder builder = new AlertDialog.Builder(MapViewActivity.this);
+    			builder.setMessage("You are out of range of this map.")
+    				.setNeutralButton("Go Back", new DialogInterface.OnClickListener() {
+    					public void onClick(DialogInterface dialog, int id) {
+    						MapViewActivity.this.finish();
+    					}
+    				});
+    			outOfRangeAlert = builder.create();
+    		}
+    		if(!outOfRangeAlert.isShowing()) {
+    			outOfRangeAlert.show();   		
+    		}
+    	}
     }
     
+    private boolean inRange(double lat, double lon) {
+    	if((maxLatitude > minLatitude && lat >= minLatitude && lat <= maxLatitude) || (maxLatitude < minLatitude && lat <= minLatitude && lat >= maxLatitude)) {
+        	if((maxLongitude > minLongitude && lat >= minLongitude && lat <= maxLongitude) || (maxLongitude < minLongitude && lat <= minLongitude && lat >= maxLongitude)) {
+        		return true;
+        	}
+        }
+    	return false;
+    }
+    
+    private Runnable mRemoveGPSWaiting = new Runnable() {
+    	public void run() {
+			if(d.isShowing()) {
+				d.hide();
+				// If still waiting for GPS, we assume device has no signal currently. 
+				AlertDialog.Builder builder = new AlertDialog.Builder(MapViewActivity.this);
+				builder.setMessage("No GPS Signal could be found or GPS is inactive on phone.")
+					.setNeutralButton("Go Back", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+							MapViewActivity.this.finish();
+						}
+					});
+				AlertDialog a = builder.create();
+				a.show();
+			}
+    	}
+    };
     
 }
