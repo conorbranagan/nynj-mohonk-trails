@@ -26,17 +26,21 @@
 	<TextView  
     	android:layout_width="fill_parent" 
     	android:layout_height="wrap_content" 
-    	android:textColor="#000000"
+    	android:textColor="#FFFFFF"
     	android:textSize="10pt"
     	android:layout_gravity="center_horizontal|top"
+    	android:paddingLeft="45px"
+    	android:paddingRight="45px"
     	android:text="NY/NJ Trails Conference"
     	/>
     <TextView
     	android:layout_width="fill_parent"
     	android:layout_height="wrap_content"
-    	android:textColor="#000000"
-    	android:textSize="14pt"
+    	android:textColor="#FFFFFF"
+    	android:textSize="10pt"
     	android:layout_gravity="center_horizontal|bottom"
-    	android:text="Trails Tracker"
+    	android:paddingLeft="35px"
+    	android:paddingRight="35px"
+    	android:text="Shawangunk Trail System"
     	/>
 </FrameLayout>

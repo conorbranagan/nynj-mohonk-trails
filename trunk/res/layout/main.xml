@@ -39,34 +39,28 @@
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_gravity="center_horizontal|bottom">
-		<Button
-			android:id="@+id/menu"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_marginLeft="15dip"
-			android:layout_marginBottom="10dip"
-			android:layout_marginRight="15dip"
-			android:textSize="8pt"
-			android:text="Menu">
-		</Button>
 		<Button 
         	android:id="@+id/launchMap" 
        		android:layout_width="wrap_content" 
        		android:layout_height="wrap_content"
-       		android:layout_marginRight="15dip"
-       		android:layout_marginBottom="10dip"
-       		android:layout_marginLeft="15dip"
-       		android:layout_toRightOf="@id/menu" 
+       		android:layout_centerInParent="true"
+       		android:paddingLeft="20dip"
+       		android:paddingRight="20dip" 
        		android:textSize="8pt"
         	android:text="View Map">
+		</Button>
+		<Button
+			android:id="@+id/menu"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_toLeftOf="@id/launchMap"
+			android:textSize="8pt"
+			android:text="Menu">
 		</Button>
 		<Button
 			android:id="@+id/exit"	
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_marginRight="15dip"
-			android:layout_marginBottom="10dip"
-			android:layout_marginLeft="15dip"
 			android:layout_toRightOf="@id/launchMap"
 			android:textSize="8pt"
 			android:text="Exit">
