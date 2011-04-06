@@ -104,15 +104,21 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 		Cursor c = myDatabase.rawQuery(query, selectionArgs);
 		if(c.moveToFirst()) {
 			do {
-				Map m = new Map();
+				Map m = new Map(myContext);
 				for(int i = 0; i < c.getColumnCount(); i++) {
 					if(c.getString(i) != null) {
-						m.setVal(i, c.getString(i));
+						if(i >= 5 && i <= 8) {
+							// For longitude values we want to use getDouble() to preserve accuracy
+							m.setVal(i, c.getDouble(i));
+						} else {
+							m.setVal(i, c.getString(i));
+						}
 					}
 				}
 				results.add(m);
 			} while(c.moveToNext());
 		}
+		c.deactivate();
 		return results;
 	}
 

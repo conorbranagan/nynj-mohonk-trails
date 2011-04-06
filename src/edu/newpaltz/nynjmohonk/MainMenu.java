@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,6 +17,8 @@ public class MainMenu extends Activity {
 	Button openMap, closeApp;
 	MapDatabaseHelper mdb;
 	AlertDialog mapChoice;
+	ProgressDialog d = null;
+	Map currentMap = null;
 	
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,9 +53,16 @@ public class MainMenu extends Activity {
 				
 				@Override
 				public void onClick(DialogInterface dialog, int item) {
-					Intent i = new Intent(MainMenu.this, MapViewActivity.class);
-					i.putExtra("myMap", results.get(item));
-					startActivity(i);
+					// Show dialog symbolizing loading of image (or downloading of image)
+					mapChoice.dismiss();
+					currentMap = results.get(item);
+					d = ProgressDialog.show(MainMenu.this, "", "Loading map...");
+					// Start thread which checks on image download state
+					Thread t1 = new Thread(waitImageLoaded);
+					t1.start();
+					// Start actual image download
+					Thread t2 = new Thread(loadImage);
+					t2.start();
 				}
 			});
 	        mapChoice = builder.create();
@@ -72,4 +82,55 @@ public class MainMenu extends Activity {
         	}
         });
 	}
+	
+    private Runnable waitImageLoaded = new Runnable() {
+    	public void run() {
+			while(currentMap.getImageLoadState() == 0);
+			if(currentMap.getImageLoadState() == 3) {
+				// Image is downloading..alert the user in some way.
+				MainMenu.this.runOnUiThread(new Runnable() {
+					public void run() {
+						d.setMessage("Image does not exist on phone. Dowloading now...");
+					}
+				});
+				while(currentMap.getImageLoadState() == 3);
+			}
+			switch(currentMap.getImageLoadState()) {
+				case 1:
+					// Image loaded successfully (either downloaded or was already downloaded)
+					MainMenu.this.runOnUiThread(new Runnable() {
+						public void run() {
+							d.dismiss();
+							Intent i = new Intent(MainMenu.this, MapViewActivity.class);
+							i.putExtra("myMap", currentMap);
+							MainMenu.this.startActivity(i); // start activity on main thread								
+						}
+					});
+					break;
+				case 2:
+					// There was some error in downloading the image
+					MainMenu.this.runOnUiThread(new Runnable() {
+						public void run() {
+							d.dismiss();
+							AlertDialog.Builder builder = new AlertDialog.Builder(MainMenu.this);
+							builder.setMessage("There was an error in loading the map. Please try another map or try again later.")
+								.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int id) {
+										// TODO
+									}
+								});
+							AlertDialog a = builder.create();
+							a.show();							
+						}
+					});
+					break;
+			}
+    	}
+    };
+    
+    private Runnable loadImage = new Runnable() {
+    	public void run() {
+    		currentMap.loadImage();
+    	}
+    };
 }

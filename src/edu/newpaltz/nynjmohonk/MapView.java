@@ -1,9 +1,4 @@
 package edu.newpaltz.nynjmohonk;
-/*Pieces of Code for Multi-Touch and Zoom features were used from the following sources: 
- * http://code.google.com/p/krvarma-android-samples/ - MultiTouch example
- * http://code.google.com/p/android-pinch/ - PinchZoom example
- * 
- */
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -14,6 +9,7 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 public class MapView extends ImageView {
 	public static final float MIN_SCALE = .5f;
@@ -33,7 +29,8 @@ public class MapView extends ImageView {
 	public MapView(Context c, AttributeSet a) {
 		super(c, a);
 		m = getImageMatrix();
-		m.setScale(1f, 1f);
+		m.setScale(.5f, .5f);
+		//m.setRotate(40);
 		setImageMatrix(m);
 		setScaleType(ScaleType.MATRIX);
     	p = new Paint();
@@ -62,7 +59,7 @@ public class MapView extends ImageView {
     protected void onDraw(Canvas c) {
     	super.onDraw(c);    	
     	if(myBitmap == null) {
-        	myBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ALPHA_8);
+        	myBitmap = Bitmap.createBitmap(this.getDrawable().getMinimumWidth(), this.getDrawable().getMinimumHeight(), Bitmap.Config.ALPHA_8);
     	} else {
     		myBitmap.eraseColor(Color.TRANSPARENT); // Erase the bitmap
     	}
@@ -87,7 +84,6 @@ public class MapView extends ImageView {
 			{
 				curX = event.getX(0);
 				curY = event.getY(0);
-				//invalidate();
 				doMove = true;
 				break;
 			}
@@ -161,7 +157,7 @@ public class MapView extends ImageView {
     }
     
 	// Translates imageview so that the current location (circle) is centered 
-    public void showCurrentLocation() {
+    public void showCurrentLocation(double lat, double lon, Context c) {
     	m = getImageMatrix();
     	float xoffset = 230;
     	float yoffset = 400;
@@ -169,6 +165,9 @@ public class MapView extends ImageView {
     	final float dy = -getTransY(m) - circleY * getScale(m) + yoffset;
     	m.postTranslate(dx, dy);
     	invalidate();
+    	CharSequence s = "Current Longitude: " + lon + ", Current Latitude: " + lat; 
+    	Toast t = Toast.makeText(c, s, Toast.LENGTH_LONG);
+    	t.show();
     }
     	
 	private void zoomIn(float scale, float dist) {

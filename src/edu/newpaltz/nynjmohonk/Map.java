@@ -1,15 +1,37 @@
 package edu.newpaltz.nynjmohonk;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.FileOutputStream;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.entity.BufferedHttpEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Bitmap.CompressFormat;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 public class Map implements Parcelable {
+	private int imageLoadState;
 	private int id;
-	private double bllat, bllon, trlat, trlon;
+	private double min_longitude, max_latitude, lon_per_pixel, lat_per_pixel;
 	private String name, ekey, fname, url;
+	private Context myContext;
 	
-	public Map() {
-		// Something to do here?
+	public Map(Context c) {
+		imageLoadState = 0;
+		myContext = c;
 	}
 	
 	public void setVal(int column, String val) {
@@ -19,10 +41,17 @@ public class Map implements Parcelable {
 			case 2: this.ekey = val; break;
 			case 3: this.fname = val; break;
 			case 4: this.url = val; break;
-			case 5: this.bllat = Double.parseDouble(val); break;
-			case 6: this.bllon = Double.parseDouble(val); break;
-			case 7: this.trlat = Double.parseDouble(val); break;
-			case 8: this.trlon = Double.parseDouble(val); break;
+			default: break;
+		}
+	}
+	
+	public void setVal(int column, double val) {
+		switch(column) {
+			case 5: this.min_longitude = val; break;
+			case 6: this.max_latitude = val; break;
+			case 7: this.lat_per_pixel = val; break;
+			case 8: this.lon_per_pixel = val; break;
+			default: break;
 		}
 	}
 
@@ -46,20 +75,32 @@ public class Map implements Parcelable {
 		return url;
 	}
 
-	public double getBllat() {
-		return bllat;
+	
+	public double getMinLongitude() { 
+		return min_longitude;
 	}
-
-	public double getBllon() {
-		return bllon;
+	
+	public double getMaxLatitude() {
+		return max_latitude;
 	}
-
-	public double getTrlat() {
-		return trlat;
+	
+	public double getLatPerPixel() {
+		return lat_per_pixel;
 	}
-
-	public double getTrlon() {
-		return trlon;
+	
+	public double getLonPerPixel() {
+		return lon_per_pixel;
+	}
+	
+	public int getImageLoadState() { 
+		return imageLoadState;
+	}
+	
+	/*
+	 * Generate filename from the image URL
+	 */
+	public String getFilename() {
+		return url.substring(url.lastIndexOf('/') + 1);
 	}
 
 	@Override
@@ -74,10 +115,78 @@ public class Map implements Parcelable {
 		out.writeString(ekey);
 		out.writeString(fname);
 		out.writeString(url);
-		out.writeDouble(bllat);
-		out.writeDouble(bllon);
-		out.writeDouble(trlat);
-		out.writeDouble(trlon);
+		out.writeDouble(min_longitude);
+		out.writeDouble(max_latitude);
+		out.writeDouble(lat_per_pixel);
+		out.writeDouble(lon_per_pixel);
+	}
+	
+	/*
+	 * Download image, if needed, from the URL of this instance into our data/data folder and
+	 * then encrypt the image file
+	 * 
+	 */
+	public void loadImage() {
+		Bitmap loadedImage = null;
+		try {
+			// File exists, set image load state as loaded
+			myContext.openFileInput(getFilename());
+			imageLoadState = 1; // image is done loading!
+			return;
+		} catch (FileNotFoundException e) {
+			imageLoadState = 3;
+			// File does not exist, attempt to load from URL
+			URL myURL = null;
+			try {
+				myURL = new URL(url);
+			} catch (MalformedURLException me) {
+				imageLoadState = 2; // error loading/downloading image
+			}
+			
+			HttpGet httpRequest = null;
+			
+			try {
+				httpRequest = new HttpGet(myURL.toURI());
+			} catch (URISyntaxException exp) {
+				imageLoadState = 2;
+			}
+			
+			try {
+				HttpClient httpClient = new DefaultHttpClient();
+				HttpResponse response = (HttpResponse)httpClient.execute(httpRequest);
+				HttpEntity entity = response.getEntity();
+				BufferedHttpEntity bufHttpEntity = new BufferedHttpEntity(entity);
+				InputStream instream = bufHttpEntity.getContent();
+				loadedImage = BitmapFactory.decodeStream(instream);
+				instream.close();
+			} catch (Exception exp) {
+				Log.d("DEBUG", "Error loading image 1");
+				Log.d("DEBUG", exp.getMessage());
+			}			
+			
+			try {
+				FileOutputStream f = myContext.openFileOutput(getFilename(), Context.MODE_WORLD_READABLE);
+				loadedImage.compress(CompressFormat.JPEG, 90, f);
+				f.flush();
+				f.close();
+				encryptImage();
+			} catch (Exception exp) {
+				Log.d("DEBUG", exp.toString());
+				Log.d("DEBUG", "Error loading image 2");
+				imageLoadState = 2;
+				return;
+			}
+			
+		}
+		imageLoadState = 1; // 1 = image fully downloaded and loaded
+	}
+	
+	private void encryptImage() {
+		// TODO
+	}
+	
+	private void decryptImage() {
+		// TODO
 	}
 	
 	public static final Parcelable.Creator<Map> CREATOR = new Parcelable.Creator<Map>() {
@@ -100,10 +209,10 @@ public class Map implements Parcelable {
 		ekey = in.readString();
 		fname = in.readString();
 		url = in.readString();
-		bllat = in.readDouble();
-		bllon = in.readDouble();
-		trlat = in.readDouble();
-		trlon = in.readDouble();
+		min_longitude = in.readDouble();
+		max_latitude = in.readDouble();
+		lat_per_pixel = in.readDouble();
+		lon_per_pixel = in.readDouble();
 	}
 	
 }
