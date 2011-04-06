@@ -1,12 +1,17 @@
 package edu.newpaltz.nynjmohonk;
 
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -24,6 +29,7 @@ public class MapViewActivity extends Activity {
 	private MapView myMapView;
 	private Handler mHandler = new Handler();
 	private double maxLatitude, minLatitude, maxLongitude, minLongitude, latPerPixel, lonPerPixel;
+	private double curLatitude = 0, curLongitude = 0;
 	private LocationListener locationListener;
 	private AlertDialog outOfRangeAlert;
 	
@@ -39,23 +45,40 @@ public class MapViewActivity extends Activity {
         Intent i = getIntent();
         myMap = (Map)i.getParcelableExtra("myMap");
         myMapView = (MapView)findViewById(R.id.map_image);
+                
         
         // Set the map image based on our map object
-        myMapView.setImageResource(R.drawable.mohonk_map); // TODO
+        try {
+        	// Will eventually have to decrypt file before opening
+        	BufferedInputStream buf = new BufferedInputStream(this.openFileInput(myMap.getFilename()));
+        	Bitmap b = BitmapFactory.decodeStream(buf);
+        	myMapView.setImageBitmap(b);
+        } catch (IOException e) {
+        	
+        }
+                
         // Max/min values are relative to the image and NOT to the numbers themselves
-        maxLongitude = myMap.getTrlon(); 
-        minLongitude = myMap.getBllon();
-        maxLatitude = myMap.getTrlat(); 
-        minLatitude = myMap.getTrlat(); 
-        latPerPixel = (Math.abs(maxLatitude - minLatitude)) / myMapView.getWidth();
-        lonPerPixel = (Math.abs(maxLongitude - minLongitude)) / myMapView.getHeight();
-        
+        minLongitude = myMap.getMinLongitude();
+        maxLatitude = myMap.getMaxLatitude();
+        latPerPixel = myMap.getLatPerPixel();
+        lonPerPixel = myMap.getLonPerPixel();
+                
+        Log.d("DEBUG", "Minimum Longitude: " + minLongitude);
+        Log.d("DEBUG", "Maximum Latitude: " + maxLatitude);
+        Log.d("DEBUG", "Lon Per Pixel: " + latPerPixel);
+        Log.d("DEBUG", "Lat Per Pixel: " + lonPerPixel);
+
+        // Using world file, maxLongitude and minLatitude are calculated
+        maxLongitude = minLongitude + (myMapView.getDrawable().getMinimumWidth() * lonPerPixel);
+        minLatitude = maxLatitude + (myMapView.getDrawable().getMinimumHeight() * -latPerPixel);
+      
+
         // Show progress dialog until GPS location is found
         d = ProgressDialog.show(this, "", "Waiting for GPS...");
         
         // Turn on the location updating
         turnOnLocation();
-        
+
         // Start the timer for looking for a GPS
         mHandler.postDelayed(mRemoveGPSWaiting, 60000); // 60 seconds: higher or lower?
         
@@ -78,7 +101,7 @@ public class MapViewActivity extends Activity {
     		finish();
     		break;
     	case R.id.current_location:
-    		myMapView.showCurrentLocation();
+    		myMapView.showCurrentLocation(curLatitude, curLongitude, this);
     		break;
     	}
     	return true;
@@ -89,9 +112,11 @@ public class MapViewActivity extends Activity {
     	super.onStop();
     	mHandler.removeCallbacks(mRemoveGPSWaiting);
         LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.removeUpdates(locationListener);
-        d.dismiss();
-        outOfRangeAlert.dismiss();
+        if(locationListener != null) locationManager.removeUpdates(locationListener);
+        if(d != null) d.dismiss();
+        if(outOfRangeAlert != null) {
+        	outOfRangeAlert.dismiss();
+        }
         finish();
     }
     
@@ -104,11 +129,13 @@ public class MapViewActivity extends Activity {
         	public void onLocationChanged(Location location) {
         		if(d.isShowing()) {
         			d.hide();
+        			d.dismiss();
         		}
         		double longitude = location.getLongitude();
         		double latitude = location.getLatitude();
         		// In this method we want to update our BitMap to reflect the change in location
-        		Log.d("DEBUG", "LOCATION CHANGED TO: " + longitude + ", " + latitude);
+        		curLatitude = latitude;
+        		curLongitude = longitude;
         		updateMapLocation(longitude, latitude);
         	}
         	
@@ -128,9 +155,9 @@ public class MapViewActivity extends Activity {
     		// Calculate pixel point
     		double numLatitudeIn = Math.abs(lat - minLatitude);
     		double numLongitudeIn = Math.abs(lon - minLongitude);
-    		double cx = numLatitudeIn / latPerPixel;
-    		double cy = numLongitudeIn / lonPerPixel;
-    		myMapView.updateLocation((float)cx, (float)cy);
+    		double cy = numLatitudeIn / latPerPixel;
+    		double cx = numLongitudeIn / lonPerPixel;
+    		myMapView.updateLocation((float)cx, myMapView.getDrawable().getMinimumHeight() - (float)cy + 8);
     	} else {
     		if(outOfRangeAlert == null) {
         		// Out of range. Display a message.
@@ -150,9 +177,15 @@ public class MapViewActivity extends Activity {
     }
     
     private boolean inRange(double lat, double lon) {
+    	// Lon: -74.1185445
+    	// Lat: 41.7612376
+    	
+    	// Max Lat: 41.827491
+    	// Min Lat: 41.705781
+    	
     	if((maxLatitude > minLatitude && lat >= minLatitude && lat <= maxLatitude) || (maxLatitude < minLatitude && lat <= minLatitude && lat >= maxLatitude)) {
-        	if((maxLongitude > minLongitude && lat >= minLongitude && lat <= maxLongitude) || (maxLongitude < minLongitude && lat <= minLongitude && lat >= maxLongitude)) {
-        		return true;
+    		if((maxLongitude > minLongitude && lon >= minLongitude && lon <= maxLongitude) || (maxLongitude < minLongitude && lon <= minLongitude && lon >= maxLongitude)) {
+    			return true;
         	}
         }
     	return false;
