@@ -34,6 +34,7 @@ public class MapViewActivity extends Activity {
 	private LocationListener locationListener;
 	private AlertDialog outOfRangeAlert;
 	private CompassListener cl;
+	private Bitmap mapBitmap;
 	
 	/**
 	 * Sets up the content view to be the map layout. Turns on the compass and links it to the map. Pulls the map
@@ -62,8 +63,8 @@ public class MapViewActivity extends Activity {
         try {
         	// Will eventually have to decrypt file before opening
         	BufferedInputStream buf = new BufferedInputStream(this.openFileInput(myMap.getFilename()));
-        	Bitmap b = BitmapFactory.decodeStream(buf);
-        	myMapView.setImageBitmap(b);
+        	mapBitmap = BitmapFactory.decodeStream(buf);
+        	myMapView.setImageBitmap(mapBitmap);
         } catch (IOException e) {
         	
         }
@@ -154,6 +155,12 @@ public class MapViewActivity extends Activity {
         if(outOfRangeAlert != null) {
         	outOfRangeAlert.dismiss();
         }
+        // General cleanup to save memory on the VM
+        myMapView.closeDown();
+        myMapView = null;
+        myMap = null;
+        mapBitmap.recycle();
+        mapBitmap = null;
         finish();
     }
     
