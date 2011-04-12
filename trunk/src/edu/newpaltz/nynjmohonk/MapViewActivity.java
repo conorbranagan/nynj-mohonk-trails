@@ -11,10 +11,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.MenuInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,7 +20,10 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 
-
+/**
+ * This activity is called from our Main Menu activity and it displays the map, updating the 
+ * user's location from GPS and generally responding to any events that deal with the map *
+ */
 public class MapViewActivity extends Activity {
 	private ProgressDialog d = null;
 	private Map myMap;
@@ -32,19 +33,29 @@ public class MapViewActivity extends Activity {
 	private double curLatitude = 0, curLongitude = 0;
 	private LocationListener locationListener;
 	private AlertDialog outOfRangeAlert;
+	private CompassListener cl;
 	
-	/** Called when the activity is first created. */
+	/**
+	 * Sets up the content view to be the map layout. Turns on the compass and links it to the map. Pulls the map
+	 * data from the Parcable and uses that information to decrypt the file and load it into the buffer. The necessary
+	 * longitude and latitude points are calculated using the information from the world file and the GPS location listener
+	 * is turned on.
+	 */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-       
+  
         // Show the map view
         setContentView(R.layout.map_layout);
+        
+        // Initialize and turn on the compass
+        cl = new CompassListener(this);
         
         // Get the Map object and a reference to the MapView
         Intent i = getIntent();
         myMap = (Map)i.getParcelableExtra("myMap");
         myMapView = (MapView)findViewById(R.id.map_image);
+        myMapView.setCompass(cl);
                 
         
         // Set the map image based on our map object
@@ -62,11 +73,6 @@ public class MapViewActivity extends Activity {
         maxLatitude = myMap.getMaxLatitude();
         latPerPixel = myMap.getLatPerPixel();
         lonPerPixel = myMap.getLonPerPixel();
-                
-        Log.d("DEBUG", "Minimum Longitude: " + minLongitude);
-        Log.d("DEBUG", "Maximum Latitude: " + maxLatitude);
-        Log.d("DEBUG", "Lon Per Pixel: " + latPerPixel);
-        Log.d("DEBUG", "Lat Per Pixel: " + lonPerPixel);
 
         // Using world file, maxLongitude and minLatitude are calculated
         maxLongitude = minLongitude + (myMapView.getDrawable().getMinimumWidth() * lonPerPixel);
@@ -84,7 +90,29 @@ public class MapViewActivity extends Activity {
         
     }
     
+    /**
+     * When the activity resumes, turn the compass listener back on
+     */
+    @Override
+    protected void onResume() {
+    	super.onResume();
+    	cl.registerListener();
+    }
+    
+    /**
+     * When the activity is in a paused state, we want to turn of the compass sensor as it uses a lot of battery
+     */
+    @Override
+    protected void onPause() {
+    	super.onPause();
+    	cl.unregisterListener();
+    }
+    
 
+    /**
+     * Create the options menu
+     * @param menu The menu we want to create
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
@@ -93,6 +121,11 @@ public class MapViewActivity extends Activity {
     	return true;
     }
     
+    /**
+     * Setup the event responders for the options selected. For exit map, simply exit the activity. For current
+     * location, we want to call our MapView to show the current location and center it on the screen.
+     * @param item The item that has been selected
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch(item.getItemId()) {
@@ -101,12 +134,16 @@ public class MapViewActivity extends Activity {
     		finish();
     		break;
     	case R.id.current_location:
-    		myMapView.showCurrentLocation(curLatitude, curLongitude, this);
+    		myMapView.showCurrentLocation(curLatitude, curLongitude);
     		break;
     	}
     	return true;
     }
     
+    /**
+     * If the activity is stopped, turn off the GPS location listener and dismiss any lingering
+     * alerts that may still be showing
+     */
     @Override
     public void onStop() {
     	super.onStop();
@@ -120,6 +157,10 @@ public class MapViewActivity extends Activity {
         finish();
     }
     
+    /**
+     * This turns on the location listener which will listen to events from the GPS and respond to them by
+     * updating the location indicator on the map
+     */
     private void turnOnLocation() {
         // Turn on the LocationManager to figure out current location
         LocationManager locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
@@ -133,7 +174,7 @@ public class MapViewActivity extends Activity {
         		}
         		double longitude = location.getLongitude();
         		double latitude = location.getLatitude();
-        		// In this method we want to update our BitMap to reflect the change in location
+        		// In this method we want to update our image to reflect the change in location
         		curLatitude = latitude;
         		curLongitude = longitude;
         		updateMapLocation(longitude, latitude);
@@ -150,6 +191,12 @@ public class MapViewActivity extends Activity {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
     }
     
+    /**
+     * Calculate the pixel point based on the given longitude and latitude. Uses information from the world
+     * file given by ArcGIS and from other values calculated at the start of the activity
+     * @param lon The current longitude read from the GPS
+     * @param lat The current latitude read from the GPS
+     */
     private void updateMapLocation(double lon, double lat) {
     	if(inRange(lat, lon)) {
     		// Calculate pixel point
@@ -176,13 +223,13 @@ public class MapViewActivity extends Activity {
     	}
     }
     
-    private boolean inRange(double lat, double lon) {
-    	// Lon: -74.1185445
-    	// Lat: 41.7612376
-    	
-    	// Max Lat: 41.827491
-    	// Min Lat: 41.705781
-    	
+    /**
+     * Determines if the given longitude and latitude is in range of this image
+     * @param lat The current latitude read from the GPS
+     * @param lon The current longitude read from the GPS
+     * @return True if the point is in range, false otherwise.
+     */
+    private boolean inRange(double lat, double lon) {    	
     	if((maxLatitude > minLatitude && lat >= minLatitude && lat <= maxLatitude) || (maxLatitude < minLatitude && lat <= minLatitude && lat >= maxLatitude)) {
     		if((maxLongitude > minLongitude && lon >= minLongitude && lon <= maxLongitude) || (maxLongitude < minLongitude && lon <= minLongitude && lon >= maxLongitude)) {
     			return true;
@@ -191,6 +238,11 @@ public class MapViewActivity extends Activity {
     	return false;
     }
     
+    /**
+     * This is an inner class thread that is executed after a given time (currently 60 seconds) and checks if the
+     * GPS is active. If not, an alert is shown telling the user that their GPS is either inactive or they are in
+     * a location without GPS service
+     */
     private Runnable mRemoveGPSWaiting = new Runnable() {
     	public void run() {
 			if(d.isShowing()) {
