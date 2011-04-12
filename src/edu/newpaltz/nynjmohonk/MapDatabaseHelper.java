@@ -12,6 +12,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
+/**
+ * A simple SQLite helper class that copies, connects to and reads from our database of maps.
+ *
+ */
 public class MapDatabaseHelper extends SQLiteOpenHelper {
 	private static String DB_PATH = ""; 
 	private static final String DB_NAME = "nynj.sqlite";
@@ -20,12 +24,22 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 	
 	private static MapDatabaseHelper myDBConnection;
 	
+	/**
+	 * Generate a MapDatabaseHelper instance within the context of this application. Also sets the path
+	 * to the SQLite database file based on the application context
+	 * @param context The current application context
+	 */
 	public MapDatabaseHelper(Context context) {
 		super(context, DB_NAME, null, 1);
 		this.myContext = context;
 		DB_PATH = "/data/data/" + context.getApplicationContext().getPackageName() + "/databases/";
 	}
 
+	/**
+	 * Gets an instance of MapDatabaseHelper which will be connected to our SQLite database
+	 * @param context The current application context
+	 * @return A connection to the database
+	 */
 	public static synchronized MapDatabaseHelper getDBInstance(Context context) {
 		if (myDBConnection == null) {
 			myDBConnection = new MapDatabaseHelper(context);
@@ -33,6 +47,11 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 		return myDBConnection;
 	}
 	
+	/**
+	 * Copies the database to the phone, if needed. If there are any errors in copying the database, such as writing
+	 * to the phone, an IOException is thrown.
+	 * @throws IOException
+	 */
 	public void createDatabase() throws IOException {
 		boolean dbExist = databaseExists();
 		if (dbExist) {
@@ -47,6 +66,10 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 		}
 	}
 	
+	/**
+	 * Checks if the database has already been copied to the phone's local filesystem
+	 * @return True if the database is already copied and false otherwise
+	 */
 	public boolean databaseExists() {
 		SQLiteDatabase checkDB = null;
 		try {
@@ -63,7 +86,13 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 		return checkDB != null;
 	}
 	
-	public void copyDatabase() throws IOException {
+	/**
+	 * Does the actual database copy, from reading the file in our assets to writing each by to our
+	 * new file that is stored on the phone. If there are any errors reading/writing, an IOException
+	 * is thrown
+	 * @throws IOException
+	 */
+	private void copyDatabase() throws IOException {
 		InputStream myInput = myContext.getAssets().open(DB_NAME);
 		String outFilename = DB_PATH + DB_NAME;
 		OutputStream myOutput = new FileOutputStream(outFilename);
@@ -78,11 +107,18 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 		myInput.close();
 	}
 	
+	/**
+	 * Reads the database from the phone
+	 * @throws IOException
+	 */
 	public void openDatabase() throws IOException {
 		String myPath = DB_PATH + DB_NAME;
 		myDatabase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
 	}
 	
+	/**
+	 * Closes the connection to the SQLite database
+	 */
 	@Override
 	public synchronized void close() {
 		if (myDatabase != null) {
@@ -91,13 +127,26 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 		super.close();
 	}
 
+	/**
+	 * Method required because we are extending SQLiteOpenHelper
+	 */
 	@Override
 	public void onCreate(SQLiteDatabase db) {}
 
+	/**
+	 * Method required because we are extending SQLiteOpenHelper
+	 */
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {}
 	
 	
+	/**
+	 * Returns an ArrayList of Map objects that are returned by the SQL SELECT query. This method assumes
+	 * that the select query is accessing the Map table 
+	 * @param query The SQL SELECT query on the Map table
+	 * @param selectionArgs A list of selection arguments, if applicable
+	 * @return An arraylist of map objects corresponding to our SELECT query
+	 */
 	// Select query function 
 	public ArrayList<Map> selectFromDatabase(String query, String[] selectionArgs) {
 		ArrayList<Map> results = new ArrayList<Map>();

@@ -20,6 +20,10 @@ public class MainMenu extends Activity {
 	ProgressDialog d = null;
 	Map currentMap = null;
 	
+	/**
+	 * Create an instance of the main menu, including copying the database (if needed) and reading the maps from the
+	 * map table. Create the onClickListener for the Select Map button.
+	 */
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
@@ -32,12 +36,15 @@ public class MainMenu extends Activity {
         	Log.d("DEBUG", "Error creating database..."); // CHANGEME
         }
         
+        // Open the sqlite database
         try {
         	mdb.openDatabase();
         } catch (IOException e) {
         	Log.d("DEBUG", "Error opening database..."); // CHANGEME
         }
         
+        // Generate the AlertDialog that will list all of the maps. Also put the information on
+        // the maps into an ArrayList so that it's accessible when the users selects a map
         if(mapChoice == null) {
 	        String query = "SELECT * FROM map";
 	        final ArrayList<Map> results = mdb.selectFromDatabase(query, null);
@@ -69,12 +76,15 @@ public class MainMenu extends Activity {
         }
         
         
+        // Open map button shows the select dialog for a map
         openMap = (Button) findViewById(R.id.launchMap);
         openMap.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				mapChoice.show();
 			}
         });
+        
+        // Close app button exits the application
         closeApp = (Button) findViewById(R.id.exit);
         closeApp.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
@@ -83,9 +93,11 @@ public class MainMenu extends Activity {
         });
 	}
 	
+	// Start a background thread that downloads the image (if needed) and loads the map and shows
+	// our MapViewActivity
     private Runnable waitImageLoaded = new Runnable() {
     	public void run() {
-			while(currentMap.getImageLoadState() == 0);
+			while(currentMap.getImageLoadState() == 0); // wait while the image is in an unknown state
 			if(currentMap.getImageLoadState() == 3) {
 				// Image is downloading..alert the user in some way.
 				MainMenu.this.runOnUiThread(new Runnable() {
@@ -112,11 +124,12 @@ public class MainMenu extends Activity {
 					MainMenu.this.runOnUiThread(new Runnable() {
 						public void run() {
 							d.dismiss();
+							// Show an alert dialog that shows an error in downloading the map
 							AlertDialog.Builder builder = new AlertDialog.Builder(MainMenu.this);
 							builder.setMessage("There was an error in loading the map. Please try another map or try again later.")
 								.setNeutralButton("OK", new DialogInterface.OnClickListener() {
 									public void onClick(DialogInterface dialog, int id) {
-										// TODO
+										
 									}
 								});
 							AlertDialog a = builder.create();
@@ -128,6 +141,7 @@ public class MainMenu extends Activity {
     	}
     };
     
+    // Short thread to load the image in the background
     private Runnable loadImage = new Runnable() {
     	public void run() {
     		currentMap.loadImage();

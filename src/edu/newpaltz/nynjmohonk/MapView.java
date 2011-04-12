@@ -9,8 +9,14 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ImageView;
-import android.widget.Toast;
 
+/**
+ * A view class, extending Android's ImageView, that is used for displaying a Map to the user.
+ * This view includes many modifications to the original ImageView, including adjustments to 
+ * the drawing where a dot is shown of the user's location on every update and having the ability
+ * to zoom in and out and move the image.
+ *
+ */
 public class MapView extends ImageView {
 	public static final float MIN_SCALE = .5f;
 	public static final float MAX_SCALE = 2f;
@@ -22,10 +28,17 @@ public class MapView extends ImageView {
 	private Bitmap myBitmap;
 	private Paint p;
 	public float prevX = -1, prevY = -1, curX, curY, nextX, nextY, dx, dy;
-	public float distPre = -1, distCur, distMeasure; 
+	public float distPre = -1, distCur, distMeasure, curRotation = 0;
 	public float zoomIn = 1.05f, zoomOut = 0.95f, scale;
 	public float circleX = 300, circleY = 300, circleRadius = 10;
+	private CompassListener cl = null;
 	
+	/**
+	 * Create a map view with the given context and attribute set. The image is set to an initial
+	 * zoom level and to an initial rotation
+	 * @param c The current application context
+	 * @param a An attribute set for this MapView
+	 */
 	public MapView(Context c, AttributeSet a) {
 		super(c, a);
 		m = getImageMatrix();
@@ -33,28 +46,50 @@ public class MapView extends ImageView {
 		//m.setRotate(40);
 		setImageMatrix(m);
 		setScaleType(ScaleType.MATRIX);
-    	p = new Paint();
-    	p.setColor(Color.BLUE);
 	}
+	
+	/**
+	 * Sets the compass listener for this MapView which will be used in the onDraw method to show which direction
+	 * the phone is pointing
+	 * @param listener
+	 */
+	public void setCompass(CompassListener listener) { cl = listener; }
 		
+	/**
+	 * @param m The ImageMatrix of the Drawable in our MapView
+	 * @return The current scale of the image
+	 */
     private float getScale(Matrix m) {
 		float[] values = new float[9];
 		this.getImageMatrix().getValues(values);
 		return values[Matrix.MSCALE_X];
     }
     
+    /**
+     * @param m The ImageMatrix of the image
+     * @return The current X translation of the image
+     */
     private float getTransX(Matrix m) {
 		float[] values = new float[9];
 		this.getImageMatrix().getValues(values);
 		return values[Matrix.MTRANS_X];
     }    
   
+    /**
+     * @param m The ImageMatrix of the image
+     * @return The current Y translation of the image
+     */
     private float getTransY(Matrix m) {
 		float[] values = new float[9];
 		this.getImageMatrix().getValues(values);
 		return values[Matrix.MTRANS_Y];
     }    
     
+    /**
+     * Along with the basic draw which redraws the map, we use the user's current location to draw a circle on the
+     * map showing their position. Also the map is rotated to reflect the direction that the phone is currently pointing
+     * @param c The canvas of this image
+     */
     @Override
     protected void onDraw(Canvas c) {
     	super.onDraw(c);    	
@@ -65,9 +100,30 @@ public class MapView extends ImageView {
     	}
     	Canvas bitmapCanvas = new Canvas(myBitmap);
     	bitmapCanvas.drawCircle(circleX, circleY, circleRadius, p);
+    	
+    	// Rotate the map relative to the compass
+    	if(cl != null) {
+    		float forward = cl.getForward();
+    		float offset = 0 - (Math.abs(forward) - Math.abs(curRotation));   		
+    		
+			m = getImageMatrix();
+			
+			//if(offset >  || offset < -3) {
+			m.postRotate(-offset, getWidth() / 2f, getHeight() / 2f);
+			curRotation += offset;
+			//}
+
+    	}
+    	
     	c.drawBitmap(myBitmap, getImageMatrix(), p);
     }
     
+    /**
+     * Depending on the type of touch for the event, the image will change in multiple ways. If it is a multi-touch
+     * event, then the image will either be zoomed in or out, depending on the movement of the fingers. If it's a single
+     * touch event, then the image will be translated in the X or Y direction, depending on the movement of the fingers
+     * @param event The current motion event that caused this method to be called
+     */
     @Override
 	public boolean onTouchEvent(MotionEvent event) {
     	int action = event.getAction() & MotionEvent.ACTION_MASK;
@@ -90,7 +146,6 @@ public class MapView extends ImageView {
 			case MotionEvent.ACTION_POINTER_DOWN:
 			{
 				isMultiTouch = true;
-				//invalidate();		
 				break;
 			}
 			case MotionEvent.ACTION_POINTER_UP:
@@ -133,10 +188,10 @@ public class MapView extends ImageView {
 	    			int mode = distMeasure > 0 ? GROW : (distCur == distPre ? 2 : SHRINK);
 		    		switch (mode) {
 			    		case GROW: // detect fingers reverse pinching
-			    			zoomIn(scale, distCur);
+			    			zoomIn(scale);
 			    		break;
 			    		case SHRINK: // detect fingers pinching
-			    			zoomOut(scale, distCur);
+			    			zoomOut(scale);
 			    		break;
 		    		}
 					distPre = distCur;
@@ -150,14 +205,24 @@ public class MapView extends ImageView {
 	   	return true;
 	}
     
+    /**
+     * Updates the location of the circle on the map and redraws the image. This is called from our MapViewActivity
+     * when the location of the phone changes.
+     * @param cx The X position of the circle
+     * @param cy The Y position of the circle
+     */
     public void updateLocation(float cx, float cy) {
     	circleX = cx;
     	circleY = cy;
     	invalidate();
     }
     
-	// Translates imageview so that the current location (circle) is centered 
-    public void showCurrentLocation(double lat, double lon, Context c) {
+    /**
+     * Centers the view window on the current location of the user
+     * @param lat The current latitude location
+     * @param lon The current longitude location
+     */
+    public void showCurrentLocation(double lat, double lon) {
     	m = getImageMatrix();
     	float xoffset = 230;
     	float yoffset = 400;
@@ -165,12 +230,13 @@ public class MapView extends ImageView {
     	final float dy = -getTransY(m) - circleY * getScale(m) + yoffset;
     	m.postTranslate(dx, dy);
     	invalidate();
-    	CharSequence s = "Current Longitude: " + lon + ", Current Latitude: " + lat; 
-    	Toast t = Toast.makeText(c, s, Toast.LENGTH_LONG);
-    	t.show();
     }
-    	
-	private void zoomIn(float scale, float dist) {
+    
+    /**
+     * Zooms the image in to the given scale
+     * @param scale The scale to zoom the image to
+     */
+	private void zoomIn(float scale) {
 		if(scale > MAX_SCALE) return; //keeps from zooming in too much
 		
 		m = getImageMatrix();
@@ -184,7 +250,11 @@ public class MapView extends ImageView {
 		return;
 	}
 	
-	private void zoomOut(float scale, float dist) {
+	/**
+	 * Zooms the image out to the given scale
+	 * @param scale 
+	 */
+	private void zoomOut(float scale) {
 		if(scale < MIN_SCALE) return; //keeps from zooming out too much
 		
 		m = getImageMatrix();
