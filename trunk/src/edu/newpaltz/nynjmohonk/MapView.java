@@ -35,7 +35,7 @@ public class MapView extends ImageView {
 	
 	/**
 	 * Create a map view with the given context and attribute set. The image is set to an initial
-	 * zoom level and to an initial rotation
+	 * zoom level and to an initial rotation. The paint object is initialized to the color blue.
 	 * @param c The current application context
 	 * @param a An attribute set for this MapView
 	 */
@@ -46,6 +46,8 @@ public class MapView extends ImageView {
 		//m.setRotate(40);
 		setImageMatrix(m);
 		setScaleType(ScaleType.MATRIX);
+		p = new Paint();
+		p.setColor(Color.BLUE);
 	}
 	
 	/**
@@ -266,6 +268,14 @@ public class MapView extends ImageView {
         setScaleType(ScaleType.MATRIX);
         invalidate();
 		return;
+	}
+	
+	/**
+	 * Forces a recycle of the bitmap so that when the activity is run again it doesn't run out of space
+	 */
+	public void closeDown() {
+		myBitmap.recycle();
+		
 	}
 	
 }

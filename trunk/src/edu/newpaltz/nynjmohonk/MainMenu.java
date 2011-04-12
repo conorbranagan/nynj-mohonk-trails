@@ -13,6 +13,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
+/**
+ * The activity which displays the main menu for our app. It includes a few buttons to
+ * view a map, exit, or (eventually) change settings.
+ */
 public class MainMenu extends Activity {
 	Button openMap, closeApp;
 	MapDatabaseHelper mdb;
