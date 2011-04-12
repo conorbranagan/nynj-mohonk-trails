@@ -1,5 +1,8 @@
 package edu.newpaltz.nynjmohonk;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.FileOutputStream;
@@ -31,6 +34,12 @@ public class Map implements Parcelable {
 	private double min_longitude, max_latitude, lon_per_pixel, lat_per_pixel;
 	private String name, ekey, fname, url;
 	private Context myContext;
+	private Bitmap bm;
+	private byte[] cipherFile, clearFile, b;
+	private ByteArrayOutputStream baos;
+	private File f;
+	private FileInputStream fis = null;
+	private TEA file; 
 	
 	/**
 	 * Returns a map object with the given applcaition context
@@ -213,7 +222,10 @@ public class Map implements Parcelable {
 				BufferedHttpEntity bufHttpEntity = new BufferedHttpEntity(entity);
 				InputStream instream = bufHttpEntity.getContent();
 				loadedImage = BitmapFactory.decodeStream(instream);
-				// Encrypt the bitmap here
+				baos = new ByteArrayOutputStream();
+	        	loadedImage.compress(Bitmap.CompressFormat.PNG, 100, baos);
+	        	b = baos.toByteArray();
+				encryptImage(b);
 				instream.close();
 			} catch (Exception exp) {
 				Log.d("DEBUG", "Error loading image 1");
@@ -226,7 +238,7 @@ public class Map implements Parcelable {
 				loadedImage.compress(CompressFormat.JPEG, 90, f);
 				f.flush();
 				f.close();
-				encryptImage();
+				//encryptImage();
 			} catch (Exception exp) {
 				Log.d("DEBUG", exp.toString());
 				Log.d("DEBUG", "Error loading image 2");
@@ -241,15 +253,17 @@ public class Map implements Parcelable {
 	/**
 	 * Encrypt the bitmap file before writing it out to disk
 	 */
-	private void encryptImage() {
-		// TODO
+	private void encryptImage(byte[] b) {
+		file = new TEA("This is the passphrase".getBytes());
+        
+        cipherFile = file.encrypt(b);
 	}
 	
 	/**
 	 * Decrypt the image so that it can be read in as a bitmap
 	 */
 	private void decryptImage() {
-		// TODO
+		clearFile = file.decrypt(cipherFile);
 	}
 	
 	/**
