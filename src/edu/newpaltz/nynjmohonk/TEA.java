@@ -51,6 +51,7 @@ public class TEA {
 		int[] buffer = new int[crypt.length / 4];
 		pack(crypt, buffer, 0);
 		unbrew(buffer);
+		crypt = null;
 		return unpack(buffer, 1, buffer[0]);
 	}
 
@@ -111,6 +112,7 @@ public class TEA {
 			}
 			i++;
 		}
+		src = null;
 	}
 	
 	byte[] unpack(int[] src, int srcOffset, int destLength) {
@@ -126,6 +128,8 @@ public class TEA {
 				i++;
 			}
 		}
+		src = null;
 		return dest;
 	}
+	
 }
