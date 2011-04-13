@@ -1,5 +1,6 @@
 package edu.newpaltz.nynjmohonk;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import android.app.Activity;
@@ -18,7 +19,7 @@ import android.widget.Button;
  * view a map, exit, or (eventually) change settings.
  */
 public class MainMenu extends Activity {
-	Button openMap, closeApp;
+	Button openMap, closeApp, clearData;
 	MapDatabaseHelper mdb;
 	AlertDialog mapChoice;
 	ProgressDialog d = null;
@@ -95,6 +96,16 @@ public class MainMenu extends Activity {
         		finish();
         	}
         });
+        
+        // Clear data button clears out any downloaded maps and re-copies the database
+        clearData = (Button)findViewById(R.id.menu);
+        clearData.setOnClickListener(new OnClickListener() {
+        	public void onClick(View v) {
+				d = ProgressDialog.show(MainMenu.this, "", "Clearing data");
+        		Thread t1 = new Thread(clearCache);
+        		t1.start();
+        	}
+        });
 	}
 	
 	// Start a background thread that downloads the image (if needed) and loads the map and shows
@@ -149,6 +160,38 @@ public class MainMenu extends Activity {
     private Runnable loadImage = new Runnable() {
     	public void run() {
     		currentMap.loadImage();
+    	}
+    };
+    
+    // Thread to delete downloaded maps and clear out and re-copy the database
+    private Runnable clearCache = new Runnable() {
+    	public void run() {
+    		// Delete map files
+    		File f = MainMenu.this.getFilesDir();
+    		File[] allFiles = f.listFiles(); 
+    		for(int i = 0; i < allFiles.length; i++) {
+    			Log.d("DEBUG", allFiles[i].toString());
+    			allFiles[i].delete();
+    		}
+    		
+    		mdb.close(); // Close database connection
+    		MainMenu.this.deleteDatabase("nynj.sqlite");
+    		
+    		
+    		// Copy database again
+    		try {
+    			mdb.createDatabase();
+    			mdb.openDatabase();
+    		} catch (Exception e) {
+    			// Shouldn't happen
+    		}
+    		
+    		// Close progress dialog on main UI thread
+    		MainMenu.this.runOnUiThread(new Runnable() {
+				public void run() {
+					d.dismiss();						
+				}
+			});
     	}
     };
 }
