@@ -167,6 +167,7 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 				results.add(m);
 			} while(c.moveToNext());
 		}
+		c.close();
 		c.deactivate();
 		return results;
 	}

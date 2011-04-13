@@ -1,8 +1,6 @@
 package edu.newpaltz.nynjmohonk;
 
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -59,15 +57,10 @@ public class MapViewActivity extends Activity {
         myMapView.setCompass(cl);
                 
         
-        // Set the map image based on our map object
-        try {
-        	// Will eventually have to decrypt file before opening
-        	BufferedInputStream buf = new BufferedInputStream(this.openFileInput(myMap.getFilename()));
-        	mapBitmap = BitmapFactory.decodeStream(buf);
-        	myMapView.setImageBitmap(mapBitmap);
-        } catch (IOException e) {
-        	
-        }
+        // Set the map image based on our map object (decrypt the image first)
+    	byte[] decryptedImage = myMap.getDecryptedImage(this);
+    	mapBitmap = BitmapFactory.decodeByteArray(decryptedImage, 0, decryptedImage.length);
+    	myMapView.setImageBitmap(mapBitmap);
                 
         // Max/min values are relative to the image and NOT to the numbers themselves
         minLongitude = myMap.getMinLongitude();
@@ -252,7 +245,7 @@ public class MapViewActivity extends Activity {
      */
     private Runnable mRemoveGPSWaiting = new Runnable() {
     	public void run() {
-			if(d.isShowing()) {
+			if(d != null && d.isShowing()) {
 				d.hide();
 				// If still waiting for GPS, we assume device has no signal currently. 
 				AlertDialog.Builder builder = new AlertDialog.Builder(MapViewActivity.this);

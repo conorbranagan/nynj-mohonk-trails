@@ -106,7 +106,7 @@ public class MainMenu extends Activity {
 				// Image is downloading..alert the user in some way.
 				MainMenu.this.runOnUiThread(new Runnable() {
 					public void run() {
-						d.setMessage("Image does not exist on phone. Dowloading now...");
+						d.setMessage("Map is not yet loaded to this phone. Dowloading now...");
 					}
 				});
 				while(currentMap.getImageLoadState() == 3);
