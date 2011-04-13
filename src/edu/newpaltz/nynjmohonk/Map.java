@@ -1,9 +1,8 @@
 package edu.newpaltz.nynjmohonk;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileOutputStream;
 import java.net.MalformedURLException;
@@ -20,7 +19,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Bitmap.CompressFormat;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -34,12 +32,8 @@ public class Map implements Parcelable {
 	private double min_longitude, max_latitude, lon_per_pixel, lat_per_pixel;
 	private String name, ekey, fname, url;
 	private Context myContext;
-	private Bitmap bm;
-	private byte[] cipherFile, clearFile, b;
-	private ByteArrayOutputStream baos;
-	private File f;
-	private FileInputStream fis = null;
-	private TEA file; 
+	private byte[] cipherFile;
+	private TEA tea; 
 	
 	/**
 	 * Returns a map object with the given applcaition context
@@ -190,10 +184,11 @@ public class Map implements Parcelable {
 	 * then encrypt the image file
 	 */
 	public void loadImage() {
+		tea = new TEA(getEkey().getBytes());	
 		Bitmap loadedImage = null;
 		try {
 			// File exists, set image load state as loaded
-			myContext.openFileInput(getFilename());
+			myContext.openFileInput(getFilename() + ".enc");
 			imageLoadState = 1; // image is done loading!
 			return;
 		} catch (FileNotFoundException e) {
@@ -222,10 +217,10 @@ public class Map implements Parcelable {
 				BufferedHttpEntity bufHttpEntity = new BufferedHttpEntity(entity);
 				InputStream instream = bufHttpEntity.getContent();
 				loadedImage = BitmapFactory.decodeStream(instream);
-				baos = new ByteArrayOutputStream();
-	        	loadedImage.compress(Bitmap.CompressFormat.PNG, 100, baos);
-	        	b = baos.toByteArray();
-				encryptImage(b);
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	        	loadedImage.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+	        	// Encrypt the image stream to a byte array
+	            cipherFile = tea.encrypt(baos.toByteArray()); // cipherFile will be written to the disk			
 				instream.close();
 			} catch (Exception exp) {
 				Log.d("DEBUG", "Error loading image 1");
@@ -234,11 +229,13 @@ public class Map implements Parcelable {
 			
 			// Write the file out to disk as a bitmap (compressed as a JPEG file)
 			try {
-				FileOutputStream f = myContext.openFileOutput(getFilename(), Context.MODE_WORLD_READABLE);
-				loadedImage.compress(CompressFormat.JPEG, 90, f);
+				FileOutputStream f = myContext.openFileOutput(getFilename() + ".enc", Context.MODE_WORLD_READABLE);
+				// Write encrypted byte array to the disk
+				f.write(cipherFile);
+				Log.d("DEBUG", "Cipher file length: " + cipherFile.length);
+				cipherFile = null; // for memory reasons?
 				f.flush();
 				f.close();
-				//encryptImage();
 			} catch (Exception exp) {
 				Log.d("DEBUG", exp.toString());
 				Log.d("DEBUG", "Error loading image 2");
@@ -251,19 +248,24 @@ public class Map implements Parcelable {
 	}
 	
 	/**
-	 * Encrypt the bitmap file before writing it out to disk
-	 */
-	private void encryptImage(byte[] b) {
-		file = new TEA("This is the passphrase".getBytes());
-        
-        cipherFile = file.encrypt(b);
-	}
-	
-	/**
 	 * Decrypt the image so that it can be read in as a bitmap
 	 */
-	private void decryptImage() {
-		clearFile = file.decrypt(cipherFile);
+	public byte[] getDecryptedImage(Context c) {
+		tea = new TEA(getEkey().getBytes());
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try {
+			InputStream is = c.openFileInput(getFilename() + ".enc");
+			byte[] b = new byte[1024];
+			int bytesRead;
+			while ((bytesRead = is.read(b)) != -1) {
+				bos.write(b, 0, bytesRead);
+			}
+		} catch(FileNotFoundException e) {
+			return null;
+		} catch(IOException e) {
+			return null;
+		}
+		return tea.decrypt(bos.toByteArray());
 	}
 	
 	/**
