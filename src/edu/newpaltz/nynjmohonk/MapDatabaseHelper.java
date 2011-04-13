@@ -145,7 +145,7 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 	 * that the select query is accessing the Map table 
 	 * @param query The SQL SELECT query on the Map table
 	 * @param selectionArgs A list of selection arguments, if applicable
-	 * @return An arraylist of map objects corresponding to our SELECT query
+	 * @return An ArrayList of map objects corresponding to our SELECT query
 	 */
 	// Select query function 
 	public ArrayList<Map> selectFromDatabase(String query, String[] selectionArgs) {

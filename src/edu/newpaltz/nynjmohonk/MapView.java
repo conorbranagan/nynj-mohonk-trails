@@ -110,10 +110,10 @@ public class MapView extends ImageView {
     		
 			m = getImageMatrix();
 			
-			//if(offset >  || offset < -3) {
-			m.postRotate(-offset, getWidth() / 2f, getHeight() / 2f);
-			curRotation += offset;
-			//}
+			if(offset >  3 || offset < -3) {
+				m.postRotate(-offset, getWidth() / 2f, getHeight() / 2f);
+				curRotation += offset;
+			}
 
     	}
     	

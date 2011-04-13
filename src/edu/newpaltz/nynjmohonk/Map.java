@@ -218,13 +218,17 @@ public class Map implements Parcelable {
 				InputStream instream = bufHttpEntity.getContent();
 				loadedImage = BitmapFactory.decodeStream(instream);
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	        	loadedImage.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+	        	loadedImage.compress(Bitmap.CompressFormat.JPEG, 90, baos);
 	        	// Encrypt the image stream to a byte array
-	            cipherFile = tea.encrypt(baos.toByteArray()); // cipherFile will be written to the disk			
+	            cipherFile = tea.encrypt(baos.toByteArray()); // cipherFile will be written to the disk		
+	            baos = null;
+	            loadedImage.recycle();
 				instream.close();
 			} catch (Exception exp) {
 				Log.d("DEBUG", "Error loading image 1");
-				Log.d("DEBUG", exp.getMessage());
+				//Log.d("DEBUG", exp.getMessage());
+				imageLoadState = 2;
+				return; // Exit here - don't try to write invalid/no data to phone
 			}			
 			
 			// Write the file out to disk as a bitmap (compressed as a JPEG file)
@@ -232,7 +236,6 @@ public class Map implements Parcelable {
 				FileOutputStream f = myContext.openFileOutput(getFilename() + ".enc", Context.MODE_WORLD_READABLE);
 				// Write encrypted byte array to the disk
 				f.write(cipherFile);
-				Log.d("DEBUG", "Cipher file length: " + cipherFile.length);
 				cipherFile = null; // for memory reasons?
 				f.flush();
 				f.close();

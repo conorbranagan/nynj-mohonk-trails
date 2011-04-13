@@ -47,15 +47,16 @@ public class MapViewActivity extends Activity {
         // Show the map view
         setContentView(R.layout.map_layout);
         
-        // Initialize and turn on the compass
-        cl = new CompassListener(this);
-        
         // Get the Map object and a reference to the MapView
         Intent i = getIntent();
         myMap = (Map)i.getParcelableExtra("myMap");
         myMapView = (MapView)findViewById(R.id.map_image);
+  
+        // Initialize and turn on the compass
+        cl = new CompassListener(this, myMapView);
         myMapView.setCompass(cl);
-                
+  
+        
         
         // Set the map image based on our map object (decrypt the image first)
     	byte[] decryptedImage = myMap.getDecryptedImage(this);
@@ -74,7 +75,7 @@ public class MapViewActivity extends Activity {
       
 
         // Show progress dialog until GPS location is found
-        d = ProgressDialog.show(this, "", "Waiting for GPS...");
+        //d = ProgressDialog.show(this, "", "Waiting for GPS...");
         
         // Turn on the location updating
         turnOnLocation();

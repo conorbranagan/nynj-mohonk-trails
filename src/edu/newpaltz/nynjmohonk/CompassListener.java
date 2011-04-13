@@ -14,14 +14,16 @@ public class CompassListener implements SensorEventListener {
 	private float[] vals = new float[3];
 	private SensorManager mSensorManager;
 	private Context mContext;
+	private MapView m;
 	
 	/**
 	 * Create a compass listener object
 	 * @param c Current Android application context
 	 */
-	public CompassListener(Context c) {
+	public CompassListener(Context c, MapView mapView) {
 		mContext = c;
 		mSensorManager = (SensorManager)mContext.getSystemService(Context.SENSOR_SERVICE);
+		m = mapView;
 		registerListener();
 	}
 	
@@ -59,6 +61,7 @@ public class CompassListener implements SensorEventListener {
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		vals = event.values;
+		m.invalidate(); // Redraw the map
 	}
 	
 	
