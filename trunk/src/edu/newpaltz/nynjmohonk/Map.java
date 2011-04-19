@@ -36,8 +36,9 @@ public class Map implements Parcelable {
 	private TEA tea; 
 	
 	/**
-	 * Returns a map object with the given applcaition context
+	 * Returns a map object with the given application context
 	 */
+	 
 	public Map(Context c) {
 		imageLoadState = 0;
 		myContext = c;
@@ -218,7 +219,7 @@ public class Map implements Parcelable {
 				InputStream instream = bufHttpEntity.getContent();
 				loadedImage = BitmapFactory.decodeStream(instream);
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	        	loadedImage.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+	        	loadedImage.compress(Bitmap.CompressFormat.JPEG, 20, baos);
 	        	loadedImage.recycle();
 	        	loadedImage = null;
 	        	System.gc();
