@@ -31,7 +31,7 @@
     	android:layout_gravity="center_horizontal|top"
     	android:paddingLeft="45px"
     	android:paddingRight="45px"
-    	android:text="NY/NJ Trails Conference"
+    	android:text="@string/title"
     	/>
     <TextView
     	android:layout_width="fill_parent"
@@ -41,6 +41,6 @@
     	android:layout_gravity="center_horizontal|bottom"
     	android:paddingLeft="35px"
     	android:paddingRight="35px"
-    	android:text="Shawangunk Trail System"
+    	android:text="@string/trail_system"
     	/>
 </FrameLayout>
