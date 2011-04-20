@@ -10,6 +10,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -107,6 +110,40 @@ public class MainMenu extends Activity {
         	}
         });
 	}
+	
+	/**
+     * Create the options menu at the main screen
+     * @param menu The menu we want to create
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+    	super.onCreateOptionsMenu(menu);
+    	MenuInflater inflater = getMenuInflater();
+    	inflater.inflate(R.menu.main_menu, menu);
+    	return true;
+    }
+    
+    /**
+     * Setup the event responders for the options selected. 
+     * @param item The item that has been selected
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	switch(item.getItemId()) {
+    	case R.id.clear_cache:
+    		d = ProgressDialog.show(MainMenu.this, "", "Clearing data");
+    		Thread t1 = new Thread(clearCache);
+    		t1.start();
+    		break;
+    	case R.id.support:
+    		//TODO: create a reference people can go to for help
+    		break;
+    	case R.id.info:
+    		//TODO: create a "credits page" giving information about the app
+    		break;
+    	}
+    	return true;
+    }	
 	
 	// Start a background thread that downloads the image (if needed) and loads the map and shows
 	// our MapViewActivity

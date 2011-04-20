@@ -59,10 +59,14 @@ public class MapViewActivity extends Activity {
         
         
         // Set the map image based on our map object (decrypt the image first)
-    	byte[] decryptedImage = myMap.getDecryptedImage(this);
-    	mapBitmap = BitmapFactory.decodeByteArray(decryptedImage, 0, decryptedImage.length);
+    	String decryptedFilename = myMap.getDecryptedImageFilename(this);
+    	
+    	BitmapFactory.Options options = new BitmapFactory.Options();
+    	options.inTempStorage = new byte[16 * 1024];
+    	mapBitmap = BitmapFactory.decodeFile(getFilesDir() + "/" + decryptedFilename, options);
     	myMapView.setImageBitmap(mapBitmap);
-                
+        
+    	
         // Max/min values are relative to the image and NOT to the numbers themselves
         minLongitude = myMap.getMinLongitude();
         maxLatitude = myMap.getMaxLatitude();

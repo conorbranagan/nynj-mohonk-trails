@@ -17,8 +17,6 @@ import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -186,7 +184,6 @@ public class Map implements Parcelable {
 	 */
 	public void loadImage() {
 		tea = new TEA(getEkey().getBytes());	
-		Bitmap loadedImage = null;
 		try {
 			// File exists, set image load state as loaded
 			myContext.openFileInput(getFilename() + ".enc");
@@ -217,23 +214,26 @@ public class Map implements Parcelable {
 				HttpEntity entity = response.getEntity();
 				BufferedHttpEntity bufHttpEntity = new BufferedHttpEntity(entity);
 				InputStream instream = bufHttpEntity.getContent();
-				loadedImage = BitmapFactory.decodeStream(instream);
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	        	loadedImage.compress(Bitmap.CompressFormat.JPEG, 20, baos);
-	        	loadedImage.recycle();
-	        	loadedImage = null;
-	        	System.gc();
-	        	// Encrypt the image stream to a byte array
-	            cipherFile = tea.encrypt(baos.toByteArray()); // cipherFile will be written to the disk		
-	            baos = null;
+				ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+				int nRead;
+				byte[] data = new byte[16384];
+				while((nRead = instream.read(data, 0, data.length)) != -1) {
+					buffer.write(data, 0, nRead);
+				}
+				
+				buffer.flush();
 				instream.close();
+
+				// Encrypt the image stream to a byte array
+	            cipherFile = tea.encrypt(buffer.toByteArray()); // cipherFile will be written to the disk		
+	            buffer = null;	            
 			} catch (Exception exp) {
 				Log.d("DEBUG", "Error loading image 1");
 				imageLoadState = 2;
 				return; // Exit here - don't try to write invalid/no data to phone
 			}			
 			
-			// Write the file out to disk as a bitmap (compressed as a JPEG file)
+			// Write the file out to disk
 			try {
 				FileOutputStream f = myContext.openFileOutput(getFilename() + ".enc", Context.MODE_WORLD_READABLE);
 				// Write encrypted byte array to the disk
@@ -256,7 +256,7 @@ public class Map implements Parcelable {
 	/**
 	 * Decrypt the image so that it can be read in as a bitmap
 	 */
-	public byte[] getDecryptedImage(Context c) {
+	public String getDecryptedImageFilename(Context c) {
 		tea = new TEA(getEkey().getBytes());
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		try {
@@ -272,7 +272,29 @@ public class Map implements Parcelable {
 		} catch(IOException e) {
 			return null;
 		}
-		return tea.decrypt(bos.toByteArray());
+		
+		byte[] decrypted = tea.decrypt(bos.toByteArray());
+		
+		String random = "120490faczxkjh438"; // TODO: Change to true random string
+		
+		// Write the file out to disk with our random filename
+		try {
+			FileOutputStream f = c.openFileOutput(random + ".bmp", Context.MODE_WORLD_READABLE);
+			// Write encrypted byte array to the disk
+			f.write(decrypted);
+			f.flush();
+			f.close();
+		} catch (FileNotFoundException exp) {
+			Log.d("DEBUG", exp.toString());
+			Log.d("DEBUG", "File not found: Error writing decoded image out");
+		} catch (IOException exp) {
+			Log.d("DEBUG", exp.toString());
+			Log.d("DEBUG", "IO Exception: Error writing decoded image out");		
+		}
+		
+		decrypted = null;
+		System.gc();
+		return random + ".bmp";
 	}
 	
 	/**
