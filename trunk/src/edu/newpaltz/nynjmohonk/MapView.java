@@ -239,12 +239,12 @@ public class MapView extends ImageView {
      * @param scale The scale to zoom the image to
      */
 	private void zoomIn(float scale) {
-		if(scale > MAX_SCALE) return; //keeps from zooming in too much
+		if(-scale > MAX_SCALE) return; //keeps from zooming in too much
 		
 		m = getImageMatrix();
 		m.postScale(zoomIn, zoomIn, getWidth()/2f, getHeight()/2f);
 		
-		circleRadius -= .05 * getScale(m);
+		//circleRadius -= .05 * getScale(m);
 		
 		setImageMatrix(m);
         setScaleType(ScaleType.MATRIX);
@@ -257,12 +257,12 @@ public class MapView extends ImageView {
 	 * @param scale 
 	 */
 	private void zoomOut(float scale) {
-		if(scale < MIN_SCALE) return; //keeps from zooming out too much
-		
+		if(-scale < MIN_SCALE) return; //keeps from zooming out too much
+
 		m = getImageMatrix();
 		m.postScale(zoomOut, zoomOut, getWidth()/2f, getHeight()/2f);
 		
-		circleRadius += .05 * getScale(m);
+		//circleRadius += .05 * getScale(m);
 		
 		setImageMatrix(m);
         setScaleType(ScaleType.MATRIX);

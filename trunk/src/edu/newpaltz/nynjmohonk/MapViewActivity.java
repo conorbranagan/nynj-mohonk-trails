@@ -46,7 +46,7 @@ public class MapViewActivity extends Activity {
   
         // Show the map view
         setContentView(R.layout.map_layout);
-        
+          
         // Get the Map object and a reference to the MapView
         Intent i = getIntent();
         myMap = (Map)i.getParcelableExtra("myMap");
@@ -55,18 +55,12 @@ public class MapViewActivity extends Activity {
         // Initialize and turn on the compass
         cl = new CompassListener(this, myMapView);
         myMapView.setCompass(cl);
-  
         
         
-        // Set the map image based on our map object (decrypt the image first)
-    	String decryptedFilename = myMap.getDecryptedImageFilename(this);
-    	
-    	BitmapFactory.Options options = new BitmapFactory.Options();
-    	options.inTempStorage = new byte[16 * 1024];
-    	mapBitmap = BitmapFactory.decodeFile(getFilesDir() + "/" + decryptedFilename, options);
+    	byte [] decryptedFile = myMap.getDecryptedImage(this);
+    	mapBitmap = BitmapFactory.decodeByteArray(decryptedFile, 0, decryptedFile.length);
     	myMapView.setImageBitmap(mapBitmap);
-        
-    	
+            	
         // Max/min values are relative to the image and NOT to the numbers themselves
         minLongitude = myMap.getMinLongitude();
         maxLatitude = myMap.getMaxLatitude();
@@ -79,7 +73,7 @@ public class MapViewActivity extends Activity {
       
 
         // Show progress dialog until GPS location is found
-        //d = ProgressDialog.show(this, "", "Waiting for GPS...");
+        d = ProgressDialog.show(this, "", "Waiting for GPS...");
         
         // Turn on the location updating
         turnOnLocation();
@@ -203,12 +197,12 @@ public class MapViewActivity extends Activity {
      * @param lat The current latitude read from the GPS
      */
     private void updateMapLocation(double lon, double lat) {
-    	if(inRange(lat, lon)) {
+		double numLatitudeIn = Math.abs(lat - minLatitude);
+		double numLongitudeIn = Math.abs(lon - minLongitude);
+		double cy = numLatitudeIn / latPerPixel;
+		double cx = numLongitudeIn / lonPerPixel;
+    	if(inRange(lat, lon) && inPolygonRange(cx, cy)) {
     		// Calculate pixel point
-    		double numLatitudeIn = Math.abs(lat - minLatitude);
-    		double numLongitudeIn = Math.abs(lon - minLongitude);
-    		double cy = numLatitudeIn / latPerPixel;
-    		double cx = numLongitudeIn / lonPerPixel;
     		myMapView.updateLocation((float)cx, myMapView.getDrawable().getMinimumHeight() - (float)cy + 8);
     	} else {
     		if(outOfRangeAlert == null) {
@@ -241,6 +235,16 @@ public class MapViewActivity extends Activity {
         	}
         }
     	return false;
+    }
+    
+    /**
+     * Determines if the point is within the range of the map image shape using a Polygon and Point
+     * object which are derived from the data in the SQLite database
+     * @param x Calculated x pixel
+     * @param y Calculated y pixel
+     */
+    private boolean inPolygonRange(double x, double y) {
+    	return myMap.getPolygon().contains((int)x, (int)y); // may lose value on cast
     }
     
     /**

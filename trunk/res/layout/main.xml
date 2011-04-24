@@ -50,10 +50,12 @@
         	android:text="@string/view_map">
 		</Button>
 		<Button
-			android:id="@+id/menu"
+			android:id="@+id/download_maps"
 			android:layout_width="200px" 
        		android:layout_height="wrap_content"
-       		android:text="Menu">
+       		android:text="@string/download_maps"
+       		android:textSize="14dip"
+       		android:layout_centerHorizontal = "true">
        	</Button>
 		<Button
 			android:id="@+id/exit"	
