@@ -43,7 +43,7 @@ public class MapViewActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-  
+        
         // Show the map view
         setContentView(R.layout.map_layout);
           
@@ -52,6 +52,9 @@ public class MapViewActivity extends Activity {
         myMap = (Map)i.getParcelableExtra("myMap");
         myMapView = (MapView)findViewById(R.id.map_image);
   
+        // Set the title of this view to the name of the map
+        setTitle(myMap.getName());
+        
         // Initialize and turn on the compass
         cl = new CompassListener(this, myMapView);
         myMapView.setCompass(cl);
