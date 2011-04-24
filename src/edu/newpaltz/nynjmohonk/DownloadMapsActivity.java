@@ -43,6 +43,7 @@ public class DownloadMapsActivity extends ListActivity {
 			} else {
 				thisMap.put("image", android.R.drawable.ic_input_add + "");
 			}
+			thisMap.put("description", m.getDescription());
 			mapInfoForList.add(thisMap);
 		}
 		
@@ -50,8 +51,8 @@ public class DownloadMapsActivity extends ListActivity {
 				getApplicationContext(), 
 				mapInfoForList, 
 				R.layout.map_list_item, 
-				new String[] {"name", "image"},
-				new int[] {R.id.list_title, R.id.list_image}
+				new String[] {"name", "image", "description"},
+				new int[] {R.id.list_title, R.id.list_image, R.id.list_description}
 		);
 		
 		this.setListAdapter(mapAdapter);

@@ -6,12 +6,11 @@
   android:orientation="vertical"
   android:stretchColumns="1">
   <TableRow
-  	android:layout_marginBottom="5dp"
   	android:layout_marginTop="5dp"
   >
     <TextView android:text="TextView" 
     	android:id="@+id/list_title" 
-    	android:textSize="25dp"
+    	android:textSize="22dp"
     	android:textStyle="bold"
     	android:layout_marginLeft="5dp"
     	android:layout_width="wrap_content" 
@@ -25,5 +24,17 @@
     	android:paddingRight="10dp"
     	android:paddingTop="3dp">
     </ImageView>
+  </TableRow>
+ <TableRow
+  	android:layout_marginBottom="5dp"
+  >
+    <TextView android:text="TextView" 
+    	android:id="@+id/list_description" 
+    	android:textSize="15dp"
+    	android:textStyle="italic"
+    	android:layout_marginLeft="5dp"
+    	android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content">
+    </TextView>
   </TableRow>
 </TableLayout>
