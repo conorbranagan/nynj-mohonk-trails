@@ -126,10 +126,10 @@ public class MainMenu extends Activity {
     		t1.start();
     		break;
     	case R.id.support:
-    		//TODO: create a reference people can go to for help
+    		startActivity(new Intent(this, Support.class));
     		break;
     	case R.id.info:
-    		//TODO: create a "credits page" giving information about the app
+    		startActivity(new Intent(this, Information.class));
     		break;
     	}
     	return true;
