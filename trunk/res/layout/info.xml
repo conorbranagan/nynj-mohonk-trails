@@ -40,12 +40,4 @@
 		android:layout_below="@id/nynjconf"
 		android:paddingLeft="75px"
 	/>
-	<Button
-		android:id="@+id/okay2"
-		android:text="OK"
-		android:layout_width="250px" 
-       	android:layout_height="wrap_content"
-		android:layout_below="@id/nynj_website"
-		android:textSize="8pt"
-		/>
 </RelativeLayout>
