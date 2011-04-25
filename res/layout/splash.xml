@@ -33,14 +33,13 @@
     	android:paddingRight="45px"
     	android:text="@string/title"
     	/>
-    <TextView
-    	android:layout_width="fill_parent"
-    	android:layout_height="wrap_content"
+    <TextView  
+    	android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content" 
     	android:textColor="#FFFFFF"
-    	android:textSize="10pt"
+    	android:textSize="12pt"
     	android:layout_gravity="center_horizontal|bottom"
-    	android:paddingLeft="35px"
-    	android:paddingRight="35px"
-    	android:text="@string/trail_system"
+    	android:paddingLeft="140px"
+    	android:text="@string/name"
     	/>
 </FrameLayout>

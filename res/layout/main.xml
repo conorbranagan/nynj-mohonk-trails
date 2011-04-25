@@ -41,7 +41,7 @@
 		android:layout_gravity="center_horizontal|bottom">
 		<Button 
         	android:id="@+id/launchMap" 
-       		android:layout_width="200px" 
+       		android:layout_width="250px" 
        		android:layout_height="wrap_content"
        		android:layout_centerInParent="true"
        		android:paddingLeft="20dip"
@@ -51,15 +51,15 @@
 		</Button>
 		<Button
 			android:id="@+id/download_maps"
-			android:layout_width="200px" 
+			android:layout_width="250px" 
        		android:layout_height="wrap_content"
        		android:text="@string/download_maps"
-       		android:textSize="14dip"
+       		android:textSize="8pt"
        		android:layout_centerHorizontal = "true">
        	</Button>
 		<Button
 			android:id="@+id/exit"	
-			android:layout_width="200px"
+			android:layout_width="250px"
 			android:layout_height="wrap_content"
 			android:layout_below="@id/launchMap"
 			android:layout_centerHorizontal = "true"
