@@ -70,12 +70,4 @@
 		android:layout_height="wrap_content"
 		android:layout_below="@id/map_support"
 		/>
-	<Button
-		android:id="@+id/okay"
-		android:text="OK"
-		android:layout_width="250px" 
-       	android:layout_height="wrap_content"
-		android:layout_below="@id/map_support_web"
-		android:textSize="8pt"
-		/>
 </RelativeLayout>
