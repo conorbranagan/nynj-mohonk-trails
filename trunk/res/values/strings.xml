@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NJNY Trails</string>
+    <string name="app_name">NJNY Trails </string>
+    <string name="name">Map App</string>
     <string name="splash_screen">SplashScreen</string>
     <string name="current_location">Show Current Location</string>
     <string name="exit_map">Exit Map</string>
 	<string name="clear_cache">Clear Cache</string>
 	<string name="support">Support</string>
 	<string name="website">www.nynjtc.org</string>
-	<string name="trail_system">Shawangunk Trail System</string>
+	<string name="trail_system">NY/NJ Trails Map App</string>
 	<string name="view_map">View Map</string>
 	<string name="exit">Exit</string>
 	<string name="title">NY/NJ Trails Conference</string>
 	<string name="info">Information</string>
 	<string name="download_maps">Download Maps</string>
+	<string name="FAQ">FAQ:</string>
+	<string name="FAQ_web">www.nynjtc.org/faq</string>
+	<string name="tech_support">Technical Support:</string>
+	<string name="tech_support_web">www.nynjtc.org/techsupport</string>
+	<string name="map_support">Map Information:</string>
+	<string name="map_support_web">www.nynjtc.org/maps</string>
 </resources>

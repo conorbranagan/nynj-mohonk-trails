@@ -28,5 +28,9 @@
         </activity>       
          <activity android:name="DownloadMapsActivity" android:configChanges="orientation">
         </activity> 
+        <activity android:name="Support" android:configChanges="orientation">
+        </activity>
+        <activity android:name="Information" android:configChanges="orientation">
+        </activity>
     </application>
 </manifest>
