@@ -19,7 +19,7 @@ import android.widget.ImageView;
  */
 public class MapView extends ImageView {
 	public static final float MIN_SCALE = .5f;
-	public static final float MAX_SCALE = 2f;
+	public static final float MAX_SCALE = 1.4f;
 	public static final int GROW = 0;
 	public static final int SHRINK = 1;
 	
@@ -42,8 +42,9 @@ public class MapView extends ImageView {
 	public MapView(Context c, AttributeSet a) {
 		super(c, a);
 		m = getImageMatrix();
-		m.setScale(.5f, .5f);
+		m.setScale(.8f, .8f);
 		//m.setRotate(40);
+		centerOnPoint(1500, 1000, false);
 		setImageMatrix(m);
 		setScaleType(ScaleType.MATRIX);
 		p = new Paint();
@@ -102,22 +103,22 @@ public class MapView extends ImageView {
     	}
     	Canvas bitmapCanvas = new Canvas(myBitmap);
     	bitmapCanvas.drawCircle(circleX, circleY, circleRadius, p);
+    	c.drawBitmap(myBitmap, getImageMatrix(), p);
     	
     	// Rotate the map relative to the compass
     	if(cl != null) {
-    		float forward = cl.getForward();
-    		float offset = 0 - (Math.abs(forward) - Math.abs(curRotation));   		
+    		float forward = cl.getForward(); // + 90;
+    		float offset = 0 - (Math.abs(forward) - Math.abs(curRotation));
     		
 			m = getImageMatrix();
 			
-			if(offset >  3 || offset < -3) {
+			if(offset >  5 || offset < -5) {
 				m.postRotate(-offset, getWidth() / 2f, getHeight() / 2f);
 				curRotation += offset;
 			}
 
     	}
-    	
-    	c.drawBitmap(myBitmap, getImageMatrix(), p);
+
     }
     
     /**
@@ -225,13 +226,26 @@ public class MapView extends ImageView {
      * @param lon The current longitude location
      */
     public void showCurrentLocation(double lat, double lon) {
+    	centerOnPoint(circleX, circleY, true);
+    }
+    
+    /**
+     * Centers to the given coordinate
+     * @param x The x coordinate to center on
+     * @param y The y coordinate to center on
+     * @param post Tells whether this is after the map has been drawn or not
+     */
+    public void centerOnPoint(float x, float y, boolean post) {
     	m = getImageMatrix();
-    	float xoffset = 230;
-    	float yoffset = 400;
-    	final float dx = -getTransX(m) - circleX * getScale(m) + xoffset;
-    	final float dy = -getTransY(m) - circleY * getScale(m) + yoffset;
-    	m.postTranslate(dx, dy);
-    	invalidate();
+       	float xoffset = 150, yoffset = 500; // these values should probably not be hardcoded
+    	final float dx = -getTransX(m) - x * getScale(m) + xoffset;
+    	final float dy = -getTransY(m) - y * getScale(m) + yoffset;
+    	    	
+    	if(post) {
+    		m.postTranslate(dx, dy);   
+        	invalidate();
+    	}
+    	else m.setTranslate(dx, dy);
     }
     
     /**

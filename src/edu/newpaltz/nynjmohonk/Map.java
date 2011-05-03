@@ -246,6 +246,9 @@ public class Map implements Parcelable {
 				InputStream instream = bufHttpEntity.getContent();
 				int nRead;
 				
+				/*Log.d("DEBUG", "External dir: " + Environment.getExternalStorageDirectory());
+				File file = new File(Environment.getExternalStorageDirectory() + "/" + getFilename() + ".enc");
+				FileOutputStream f = new FileOutputStream(file);*/
 				FileOutputStream f = myContext.openFileOutput(getFilename() + ".enc", Context.MODE_WORLD_READABLE);
 				
 				// Write out to a file, make sure to encrypt the first bit of the file
@@ -282,6 +285,8 @@ public class Map implements Parcelable {
 		tea = new TEA(getEkey().getBytes());
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		try {
+			/*File file = new File(Environment.getExternalStorageDirectory() + "/" + getFilename() + ".enc");
+			InputStream is = new FileInputStream(file);*/
 			InputStream is = c.openFileInput(getFilename() + ".enc");
 			byte[] b = new byte[16384];
 			int bytesRead;
