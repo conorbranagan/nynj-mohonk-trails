@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MenuInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +34,7 @@ public class MapViewActivity extends Activity {
 	private AlertDialog outOfRangeAlert;
 	private CompassListener cl;
 	private Bitmap mapBitmap;
+	private boolean willCenter = false;
 	
 	/**
 	 * Sets up the content view to be the map layout. Turns on the compass and links it to the map. Pulls the map
@@ -61,6 +63,7 @@ public class MapViewActivity extends Activity {
         
         
     	byte [] decryptedFile = myMap.getDecryptedImage(this);
+    	Log.d("DEBUG", "Decrypted file length: " + decryptedFile.length);
     	mapBitmap = BitmapFactory.decodeByteArray(decryptedFile, 0, decryptedFile.length);
     	myMapView.setImageBitmap(mapBitmap);
             	
@@ -83,7 +86,6 @@ public class MapViewActivity extends Activity {
 
         // Start the timer for looking for a GPS
         mHandler.postDelayed(mRemoveGPSWaiting, 60000); // 60 seconds: higher or lower?
-        
     }
     
     /**
@@ -170,9 +172,11 @@ public class MapViewActivity extends Activity {
         // Define a location listener and the events that go with it    
         locationListener = new LocationListener() {
         	public void onLocationChanged(Location location) {
-        		if(d.isShowing()) {
+        		if(d != null && d.isShowing()) {
         			d.hide();
         			d.dismiss();
+        			// Center on the first point
+        			willCenter = true;
         		}
         		double longitude = location.getLongitude();
         		double latitude = location.getLatitude();
@@ -200,10 +204,17 @@ public class MapViewActivity extends Activity {
      * @param lat The current latitude read from the GPS
      */
     private void updateMapLocation(double lon, double lat) {
+    	lon = -74.14879;
+    	lat = 41.79921;
 		double numLatitudeIn = Math.abs(lat - minLatitude);
 		double numLongitudeIn = Math.abs(lon - minLongitude);
 		double cy = numLatitudeIn / latPerPixel;
 		double cx = numLongitudeIn / lonPerPixel;
+		Log.d("DEBUG", "checking in range for: " + cx + ", " + cy);
+		if(willCenter) { 
+			myMapView.centerOnPoint((float)cx, (float)cy, true); 
+			willCenter = false;
+		}
     	if(inRange(lat, lon) && inPolygonRange(cx, cy)) {
     		// Calculate pixel point
     		myMapView.updateLocation((float)cx, myMapView.getDrawable().getMinimumHeight() - (float)cy + 8);
@@ -247,7 +258,8 @@ public class MapViewActivity extends Activity {
      * @param y Calculated y pixel
      */
     private boolean inPolygonRange(double x, double y) {
-    	return myMap.getPolygon().contains((int)x, (int)y); // may lose value on cast
+    	int realY = myMapView.getDrawable().getMinimumHeight() - (int)y;
+    	return myMap.getPolygon().contains((int)x, (int)realY); // may lose value on cast
     }
     
     /**
