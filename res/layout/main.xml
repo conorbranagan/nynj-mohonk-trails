@@ -7,7 +7,6 @@
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
 		android:scaleType="center"
-		android:paddingTop="60px"
 		android:src="@drawable/hikingphoto" />
 	<RelativeLayout	
 		android:layout_width="fill_parent"
@@ -15,8 +14,10 @@
 		android:layout_gravity="center_horizontal|top">
 		<ImageView
 			android:id="@+id/icon"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+			android:layout_width="75px"
+			android:layout_height="75px"
+			android:paddingRight="10dip"
+			android:paddingBottom="10dip"
 			android:src="@drawable/nynjtc_icon" />
 		<TextView
 			android:text="@string/website"
