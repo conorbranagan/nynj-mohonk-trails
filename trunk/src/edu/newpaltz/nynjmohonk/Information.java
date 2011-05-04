@@ -3,6 +3,9 @@ package edu.newpaltz.nynjmohonk;
 import android.app.Activity;
 import android.os.Bundle;
 
+/**
+ * Simple activity to display informtaion about the app
+ */
 public class Information extends Activity {
 	
 	@Override

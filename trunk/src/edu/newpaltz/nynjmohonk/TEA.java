@@ -55,7 +55,7 @@ public class TEA {
 		return unpack(buffer, 1, buffer[0]);
 	}
 
-	void brew(int[] buf) {
+	private void brew(int[] buf) {
 		assert buf.length % 2 == 1;
 		int i, v0, v1, sum, n;
 		i = 1;
@@ -75,7 +75,7 @@ public class TEA {
 		}
 	}
 	
-	void unbrew(int[] buf) {
+	private void unbrew(int[] buf) {
 		assert buf.length % 2 == 1;
 		int i, v0, v1, sum, n;
 		i = 1;
@@ -95,7 +95,7 @@ public class TEA {
 		}
 	}
 	
-	void pack(byte[] src, int[] dest, int destOffset) {
+	private void pack(byte[] src, int[] dest, int destOffset) {
 		assert destOffset + (src.length / 4) <= dest.length;
 		int i = 0, shift = 24;
 		int j = destOffset;
@@ -115,7 +115,7 @@ public class TEA {
 		src = null;
 	}
 	
-	byte[] unpack(int[] src, int srcOffset, int destLength) {
+	private byte[] unpack(int[] src, int srcOffset, int destLength) {
 		assert destLength <= (src.length - srcOffset) * 4;
 		byte[] dest = new byte[destLength];
 		int i = srcOffset;
