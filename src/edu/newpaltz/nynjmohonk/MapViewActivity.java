@@ -92,7 +92,7 @@ public class MapViewActivity extends Activity {
         turnOnLocation();
 
         // Start the timer for looking for a GPS
-        mHandler.postDelayed(mRemoveGPSWaiting, 60000); // 60 seconds: higher or lower?
+        mHandler.postDelayed(mRemoveGPSWaiting, 120000); // 120 seconds/2 minutes: higher or lower?
     }
     
     /**
