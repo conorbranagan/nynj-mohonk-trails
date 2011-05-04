@@ -7,6 +7,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -63,7 +64,6 @@ public class MapViewActivity extends Activity {
         
         
     	byte [] decryptedFile = myMap.getDecryptedImage(this);
-    	Log.d("DEBUG", "Decrypted file length: " + decryptedFile.length);
     	mapBitmap = BitmapFactory.decodeByteArray(decryptedFile, 0, decryptedFile.length);
     	myMapView.setImageBitmap(mapBitmap);
             	
@@ -79,7 +79,14 @@ public class MapViewActivity extends Activity {
       
 
         // Show progress dialog until GPS location is found
-        d = ProgressDialog.show(this, "", "Waiting for GPS...");
+        d = ProgressDialog.show(this, "", "Waiting for GPS...", false, true, 
+        	new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface d) {
+					// If they cancel the GPS waiting, just exit this activity
+					finish();
+				}	
+        	});
         
         // Turn on the location updating
         turnOnLocation();
