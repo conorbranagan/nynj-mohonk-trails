@@ -7,6 +7,7 @@
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
 		android:scaleType="center"
+		android:paddingTop="60px"
 		android:src="@drawable/hikingphoto" />
 	<RelativeLayout	
 		android:layout_width="fill_parent"
