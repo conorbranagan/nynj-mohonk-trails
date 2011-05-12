@@ -1,0 +1,2 @@
+set solib-search-path /Users/squid890/workspace/nynjmohonktrails/obj/local/armeabi-v7a
+directory /Users/squid890/android-ndk-r5b/platforms/android-8/arch-arm/usr/include /Users/squid890/workspace/nynjmohonktrails/jni/bitmap/../jpeg /Users/squid890/workspace/nynjmohonktrails/jni/bitmap /Users/squid890/workspace/nynjmohonktrails/jni/jpeg /Users/squid890/android-ndk-r5b/sources/cxx-stl/system

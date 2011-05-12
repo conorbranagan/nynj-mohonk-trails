@@ -22,4 +22,5 @@
 	<string name="map_support_web">www.nynjtc.org/maps</string>
 	<string name="npcs">SUNY New Paltz Computer Science Department</string>
 	<string name="npcs_website">www.newpaltz.edu/compsci</string>
+	<string name="new_database">Get New Database</string>
 </resources>
