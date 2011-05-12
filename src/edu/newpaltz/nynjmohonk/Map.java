@@ -17,6 +17,7 @@ import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteException;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -246,9 +247,6 @@ public class Map implements Parcelable {
 				InputStream instream = bufHttpEntity.getContent();
 				int nRead;
 				
-				/*Log.d("DEBUG", "External dir: " + Environment.getExternalStorageDirectory());
-				File file = new File(Environment.getExternalStorageDirectory() + "/" + getFilename() + ".enc");
-				FileOutputStream f = new FileOutputStream(file);*/
 				FileOutputStream f = myContext.openFileOutput(getFilename() + ".enc", Context.MODE_WORLD_READABLE);
 				
 				// Write out to a file, make sure to encrypt the first bit of the file
@@ -287,7 +285,7 @@ public class Map implements Parcelable {
 		try {
 			/*File file = new File(Environment.getExternalStorageDirectory() + "/" + getFilename() + ".enc");
 			InputStream is = new FileInputStream(file);*/
-			InputStream is = c.openFileInput(getFilename() + ".enc");
+			final InputStream is = c.openFileInput(getFilename() + ".enc");
 			byte[] b = new byte[16384];
 			int bytesRead;
 			
@@ -311,6 +309,39 @@ public class Map implements Parcelable {
 		}
 		
 		return bos.toByteArray();
+	}
+	
+	/**
+	 * Temporarily decrpyts the image on the disk so that we can send the filename to our
+	 * native Bitmap decoder
+	 */
+	public void decryptImage(Context c) {
+		tea = new TEA(getEkey().getBytes());
+		try {
+			final FileOutputStream os = c.openFileOutput(getFilename(), Context.MODE_WORLD_READABLE);
+			final InputStream is = c.openFileInput(getFilename() + ".enc");
+			byte[] b = new byte[16384];
+			int bytesRead;
+			
+			// Decrypt the top bytes
+			byte[] dec = new byte[16388];
+			if(is.read(dec, 0, dec.length) != -1) {
+				dec = tea.decrypt(dec);
+				os.write(dec, 0, dec.length);
+			}
+			
+			// Read the rest of the file
+			while ((bytesRead = is.read(b, 0, b.length)) != -1) {
+				os.write(b, 0, bytesRead);
+			}
+			is.close();
+			
+		} catch(FileNotFoundException e) {
+			// Do something
+		} catch(IOException e) {
+			// Do something
+		}
+		
 	}
 	
 	/**
@@ -373,7 +404,7 @@ public class Map implements Parcelable {
 	 * @param c The current application context
 	 * @return An ArrayList<Map> with all the maps in it
 	 */
-	public static ArrayList<Map> getAllMaps(Context c) {
+	public static ArrayList<Map> getAllMaps(Context c) throws SQLiteException{
 		MapDatabaseHelper mdb = MapDatabaseHelper.getDBInstance(c);
         try {
         	mdb.createDatabase();
@@ -401,14 +432,15 @@ public class Map implements Parcelable {
 	 * @param c The current application context
 	 * @return An ArrayList<Map> with all the downlaoded maps
 	 */
-	public static ArrayList<Map> getDownloadedMaps(Context c) {
+	public static ArrayList<Map> getDownloadedMaps(Context c) throws SQLiteException, IOException {
+		ArrayList<Map> results = new ArrayList<Map>();
 		ArrayList<Map> allMaps = Map.getAllMaps(c);
 		for(int i = 0; i < allMaps.size(); i++) {
-			if(!allMaps.get(i).isDownloaded()) {
-				allMaps.remove(i);
+			if(allMaps.get(i).isDownloaded()) {
+				results.add(allMaps.get(i));
 			}
 		}
-		return allMaps;
+		return results;
 	}
 	
 	/**
@@ -416,13 +448,14 @@ public class Map implements Parcelable {
 	 * @param c The current application context
 	 * @return An ArrayList<Map> with all the undownloaded maps
 	 */
-	public static ArrayList<Map> getUndownloadedMaps(Context c) {
+	public static ArrayList<Map> getUndownloadedMaps(Context c) throws SQLiteException, IOException {
+		ArrayList<Map> results = new ArrayList<Map>();
 		ArrayList<Map> allMaps = Map.getAllMaps(c);
 		for(int i = 0; i < allMaps.size(); i++) {
 			if(allMaps.get(i).isDownloaded()) {
-				allMaps.remove(i);
+				results.add(allMaps.get(i));
 			}
 		}
-		return allMaps;
+		return results;
 	}	
 }

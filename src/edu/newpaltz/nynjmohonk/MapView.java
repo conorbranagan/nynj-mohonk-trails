@@ -2,6 +2,7 @@ package edu.newpaltz.nynjmohonk;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -19,19 +20,27 @@ import android.widget.ImageView;
  */
 public class MapView extends ImageView {
 	public static final float MIN_SCALE = .5f;
-	public static final float MAX_SCALE = 1.4f;
+	public static final float MAX_SCALE = 1.7f;
 	public static final int GROW = 0;
 	public static final int SHRINK = 1;
 	
 	public boolean isMultiTouch = false, doMove = true;
-	private Matrix m;
-	private Bitmap myBitmap;
+	private Matrix m, pm;
+	private Bitmap myBitmap, pointBitmap, mapBitmap;
 	private Paint p;
 	public float prevX = -1, prevY = -1, curX, curY, nextX, nextY, dx, dy;
 	public float distPre = -1, distCur, distMeasure, curRotation = 0;
 	public float zoomIn = 1.05f, zoomOut = 0.95f, scale;
-	public float circleX = 300, circleY = 300, circleRadius = 10;
+	public float circleX = -1, circleY = -1;
 	private CompassListener cl = null;
+	private Canvas bitmapCanvas;	
+	private float bearing = 0.0f;
+	private Context mContext;
+	private Map myMap;
+	private boolean firstDraw = true;
+	
+	private static native void renderBitmap(Bitmap bitmap, long time_ms, String filename, int oldCircleX, int oldCircleY, boolean firstDraw);
+
 	
 	/**
 	 * Create a map view with the given context and attribute set. The image is set to an initial
@@ -41,14 +50,27 @@ public class MapView extends ImageView {
 	 */
 	public MapView(Context c, AttributeSet a) {
 		super(c, a);
+		pm = new Matrix();
 		m = getImageMatrix();
 		m.setScale(.8f, .8f);
-		//m.setRotate(40);
+		m.setRotate(40);
 		centerOnPoint(1500, 1000, false);
 		setImageMatrix(m);
 		setScaleType(ScaleType.MATRIX);
 		p = new Paint();
 		p.setColor(Color.BLUE);
+		mContext = c;
+		invalidate();
+	}
+	
+	@Override
+	public void setImageBitmap(Bitmap bm) {
+		super.setImageBitmap(bm);
+		mapBitmap = bm;
+	}
+	
+	public void setMapObj(Map m) {
+		myMap = m;
 	}
 	
 	/**
@@ -94,31 +116,53 @@ public class MapView extends ImageView {
      * @param c The canvas of this image
      */
     @Override
-    protected void onDraw(Canvas c) {
-    	super.onDraw(c);    	
-    	if(myBitmap == null) {
-        	myBitmap = Bitmap.createBitmap(this.getDrawable().getMinimumWidth(), this.getDrawable().getMinimumHeight(), Bitmap.Config.ALPHA_8);
+    protected void onDraw(Canvas c) {    	    	
+    	super.onDraw(c);
+    	renderBitmap(mapBitmap, 0, mContext.getFilesDir() + "/" + myMap.getFilename(), (int)circleX, (int)circleY, firstDraw);
+    	firstDraw = false;
+    	/*if(myBitmap == null) {
+    		try {
+    			myBitmap = Bitmap.createBitmap(this.getDrawable().getMinimumWidth(), this.getDrawable().getMinimumHeight(), Bitmap.Config.ALPHA_8);
+        	} catch(OutOfMemoryError e) {
+        		// Inform the user that we ran out of memory.
+        		System.gc();
+        		return;
+        	}  
     	} else {
     		myBitmap.eraseColor(Color.TRANSPARENT); // Erase the bitmap
-    	}
-    	Canvas bitmapCanvas = new Canvas(myBitmap);
-    	bitmapCanvas.drawCircle(circleX, circleY, circleRadius, p);
-    	c.drawBitmap(myBitmap, getImageMatrix(), p);
+    	}*/
     	
-    	// Rotate the map relative to the compass
+    	if(pointBitmap == null) {
+    		pointBitmap = BitmapFactory.decodeResource(this.getResources(), R.drawable.map_point);
+    	}
+    	
+    	/*
+    	if(bitmapCanvas == null) {
+    		bitmapCanvas = new Canvas(myBitmap);
+    	} else {
+    		myBitmap.eraseColor(Color.TRANSPARENT);
+    	}*/
+    	
+    	Matrix l = new Matrix(getImageMatrix());
+    	l.setTranslate(circleX - (pointBitmap.getWidth() / 2), circleY - (pointBitmap.getHeight() / 2));
+    	l.preRotate(curRotation, pointBitmap.getWidth() / 2, pointBitmap.getHeight() / 2);
+    	l.preScale(0.85f, 0.85f, pointBitmap.getWidth() / 2, pointBitmap.getHeight() / 2);
+    	
     	if(cl != null) {
     		float forward = cl.getForward(); // + 90;
-    		float offset = 0 - (Math.abs(forward) - Math.abs(curRotation));
+    		float offset = (Math.abs(forward) - Math.abs(curRotation));
     		
-			m = getImageMatrix();
 			
 			if(offset >  5 || offset < -5) {
-				m.postRotate(-offset, getWidth() / 2f, getHeight() / 2f);
+				l.preRotate(offset, pointBitmap.getWidth() / 2, pointBitmap.getHeight() / 2);
 				curRotation += offset;
 			}
 
     	}
-
+    	
+    	Canvas bitmapCanvas = new Canvas(mapBitmap);
+    	bitmapCanvas.drawBitmap(pointBitmap, l, p);
+    	//c.drawBitmap(myBitmap, getImageMatrix(), p);
     }
     
     /**
@@ -171,6 +215,7 @@ public class MapView extends ImageView {
 		    	        
 						m = getImageMatrix();
 		    	        m.postTranslate(dx, dy);
+		    	        pm.postTranslate(dx, dy);
 		    	        
 		    	        setImageMatrix(m);
 		    	        setScaleType(ScaleType.MATRIX);
@@ -229,6 +274,8 @@ public class MapView extends ImageView {
     	centerOnPoint(circleX, circleY, true);
     }
     
+    public void setBearing(float b) { this.bearing = b; }
+    
     /**
      * Centers to the given coordinate
      * @param x The x coordinate to center on
@@ -243,9 +290,13 @@ public class MapView extends ImageView {
     	    	
     	if(post) {
     		m.postTranslate(dx, dy);   
+	        pm.postTranslate(dx, dy);
         	invalidate();
     	}
-    	else m.setTranslate(dx, dy);
+    	else {
+    		m.setTranslate(dx, dy);
+	        pm.setTranslate(dx, dy);
+    	}
     }
     
     /**
@@ -253,7 +304,7 @@ public class MapView extends ImageView {
      * @param scale The scale to zoom the image to
      */
 	private void zoomIn(float scale) {
-		if(-scale > MAX_SCALE) return; //keeps from zooming in too much
+		if(scale > MAX_SCALE) return; //keeps from zooming in too much
 		
 		m = getImageMatrix();
 		m.postScale(zoomIn, zoomIn, getWidth()/2f, getHeight()/2f);
@@ -271,7 +322,7 @@ public class MapView extends ImageView {
 	 * @param scale 
 	 */
 	private void zoomOut(float scale) {
-		if(-scale < MIN_SCALE) return; //keeps from zooming out too much
+		if(scale < MIN_SCALE) return; //keeps from zooming out too much
 
 		m = getImageMatrix();
 		m.postScale(zoomOut, zoomOut, getWidth()/2f, getHeight()/2f);
@@ -288,8 +339,11 @@ public class MapView extends ImageView {
 	 * Forces a recycle of the bitmap so that when the activity is run again it doesn't run out of space
 	 */
 	public void closeDown() {
-		myBitmap.recycle();
-		
+		if(myBitmap != null) myBitmap.recycle();
+		if(pointBitmap != null) pointBitmap.recycle();
+		myBitmap = null;
+		pointBitmap = null;
+		System.gc();
 	}
 	
 }
