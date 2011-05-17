@@ -24,6 +24,7 @@ public class SplashScreen extends Activity {
 	    	public void run() {
 	    		finish();
 	    		startActivity(new Intent("edu.newpaltz.nynjmohonk.MainMenu"));
+	    		System.exit(0);
 	    	}
 	    }, _splashTime);
 	    
@@ -35,6 +36,7 @@ public class SplashScreen extends Activity {
 	                }
 	            });
 	}
+	
 }
 
 

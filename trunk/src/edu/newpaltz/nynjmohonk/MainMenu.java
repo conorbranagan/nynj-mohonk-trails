@@ -106,7 +106,8 @@ public class MainMenu extends Activity {
         closeApp = (Button) findViewById(R.id.exit);
         closeApp.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
-        		finish();
+        		//finish();
+        		android.os.Process.killProcess(android.os.Process.myPid());
         	}
         });
         
@@ -160,6 +161,14 @@ public class MainMenu extends Activity {
     
     public void onResume() {
     	super.onResume();
+    }
+    
+    public void onDestroy() {
+    	super.onDestroy();
+    	// Kill the app - completely!
+    	System.runFinalizersOnExit(true);
+    	System.exit(0);
+    	//android.os.Process.killProcess(android.os.Process.myPid());
     }
     
     /**
@@ -321,7 +330,7 @@ public class MainMenu extends Activity {
 					d.dismiss();
 					// Show an alert dialog that shows an error in downloading the map
 					AlertDialog.Builder builder = new AlertDialog.Builder(MainMenu.this);
-					builder.setMessage("There was an error while checking for a new database.\nPlease check your network settings and try again.")
+					builder.setMessage("There was an error while checking for a new database.\nApp will proceed as normal if database already exists.")
 						.setNeutralButton("OK", new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog, int id) {}
 						});

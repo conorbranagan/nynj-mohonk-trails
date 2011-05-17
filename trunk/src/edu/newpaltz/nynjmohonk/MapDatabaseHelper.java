@@ -177,6 +177,8 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 						if(i >= 5 && i <= 8) {
 							// For longitude values we want to use getDouble() to preserve accuracy
 							m.setVal(i, c.getDouble(i));
+						} else if(i == 11 || i == 12) {
+							m.setVal(i, c.getInt(i));
 						} else {
 							m.setVal(i, c.getString(i));
 						}
