@@ -116,32 +116,14 @@ public class MapView extends ImageView {
      * @param c The canvas of this image
      */
     @Override
-    protected void onDraw(Canvas c) {    	    	
+    protected void onDraw(Canvas c) {    
     	super.onDraw(c);
     	renderBitmap(mapBitmap, 0, mContext.getFilesDir() + "/" + myMap.getFilename(), (int)circleX, (int)circleY, firstDraw);
     	firstDraw = false;
-    	/*if(myBitmap == null) {
-    		try {
-    			myBitmap = Bitmap.createBitmap(this.getDrawable().getMinimumWidth(), this.getDrawable().getMinimumHeight(), Bitmap.Config.ALPHA_8);
-        	} catch(OutOfMemoryError e) {
-        		// Inform the user that we ran out of memory.
-        		System.gc();
-        		return;
-        	}  
-    	} else {
-    		myBitmap.eraseColor(Color.TRANSPARENT); // Erase the bitmap
-    	}*/
     	
     	if(pointBitmap == null) {
     		pointBitmap = BitmapFactory.decodeResource(this.getResources(), R.drawable.map_point);
     	}
-    	
-    	/*
-    	if(bitmapCanvas == null) {
-    		bitmapCanvas = new Canvas(myBitmap);
-    	} else {
-    		myBitmap.eraseColor(Color.TRANSPARENT);
-    	}*/
     	
     	Matrix l = new Matrix(getImageMatrix());
     	l.setTranslate(circleX - (pointBitmap.getWidth() / 2), circleY - (pointBitmap.getHeight() / 2));
@@ -149,7 +131,7 @@ public class MapView extends ImageView {
     	l.preScale(0.85f, 0.85f, pointBitmap.getWidth() / 2, pointBitmap.getHeight() / 2);
     	
     	if(cl != null) {
-    		float forward = cl.getForward(); // + 90;
+    		float forward = cl.getForward() - 90;
     		float offset = (Math.abs(forward) - Math.abs(curRotation));
     		
 			
@@ -162,7 +144,6 @@ public class MapView extends ImageView {
     	
     	Canvas bitmapCanvas = new Canvas(mapBitmap);
     	bitmapCanvas.drawBitmap(pointBitmap, l, p);
-    	//c.drawBitmap(myBitmap, getImageMatrix(), p);
     }
     
     /**

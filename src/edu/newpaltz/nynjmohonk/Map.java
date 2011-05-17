@@ -1,20 +1,15 @@
 package edu.newpaltz.nynjmohonk;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileOutputStream;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteException;
@@ -26,7 +21,7 @@ import android.os.Parcelable;
  */
 public class Map implements Parcelable {
 	private int imageLoadState;
-	private int id;
+	private int id, width, height;
 	private double min_longitude, max_latitude, lon_per_pixel, lat_per_pixel;
 	private String name, ekey, fname, url, polygon_points, description;
 	private Context myContext;
@@ -78,6 +73,20 @@ public class Map implements Parcelable {
 			default: break;
 		}
 	}
+	
+	/**
+	 * Sets a value based on the column number. Overloaded method, uses a int value in this case. See other
+	 * method for more comments
+	 * @param column The column number of the table
+	 * @param val The double value to assign
+	 */
+	public void setVal(int column, int val) {
+			switch(column) {
+			case 11: this.width = val; break;
+			case 12: this.height = val; break;
+			default: break;
+		}
+	}	
 	
 	/**
 	 * @return The unique id of the row for this map
@@ -143,6 +152,20 @@ public class Map implements Parcelable {
 	public double getLonPerPixel() {
 		return lon_per_pixel;
 	}
+	
+	/**
+	 * @return The height of the image
+	 */
+	public int getHeight() {
+		return height;
+	}
+	
+	/**
+	 * @return The width of the image
+	 */
+	public int getWidth() {
+		return width;
+	}	
 	
 	/**
 	 * @return The load state of the image
@@ -228,31 +251,18 @@ public class Map implements Parcelable {
 				imageLoadState = 2; // error loading/downloading image
 				return;
 			}
-			
-			HttpGet httpRequest = null;
-			
-			// Download the image from the URL given
+		
 			try {
-				httpRequest = new HttpGet(myURL.toURI());
-			} catch (URISyntaxException exp) {
-				imageLoadState = 2;
-				return;
-			}
-			
-			try {
-				HttpClient httpClient = new DefaultHttpClient();
-				HttpResponse response = (HttpResponse)httpClient.execute(httpRequest);
-				HttpEntity entity = response.getEntity();
-				BufferedHttpEntity bufHttpEntity = new BufferedHttpEntity(entity);
-				InputStream instream = bufHttpEntity.getContent();
-				int nRead;
-				
+				URLConnection ucon = myURL.openConnection();
+				InputStream is = ucon.getInputStream();
+				BufferedInputStream bis = new BufferedInputStream(is);
+	
 				FileOutputStream f = myContext.openFileOutput(getFilename() + ".enc", Context.MODE_WORLD_READABLE);
-				
-				// Write out to a file, make sure to encrypt the first bit of the file
-				byte[] data = new byte[16384];
+				int nRead;
+	
+				byte[] data = new byte[1024];
 				boolean encrypted = false;
-				while((nRead = instream.read(data, 0, data.length)) != -1) {
+				while((nRead = is.read(data, 0, data.length)) != -1) {
 					if(!encrypted) {
 						byte[] enc = tea.encrypt(data);
 						f.write(enc, 0, enc.length);
@@ -260,18 +270,19 @@ public class Map implements Parcelable {
 					} else {
 						f.write(data, 0, nRead);
 					}
+					//f.flush();
 				}
 				
-				f.flush();
-				f.close();
-				instream.close();
-            
+				is.close();
+				bis.close();
+					
 			} catch (Exception exp) {
 				imageLoadState = 2;
 				return; // Exit here - don't try to write invalid/no data to phone
 			}			
 			
 		}
+		
 		System.gc();
 		imageLoadState = 1; // 1 = image fully downloaded and loaded
 	}
@@ -286,11 +297,11 @@ public class Map implements Parcelable {
 			/*File file = new File(Environment.getExternalStorageDirectory() + "/" + getFilename() + ".enc");
 			InputStream is = new FileInputStream(file);*/
 			final InputStream is = c.openFileInput(getFilename() + ".enc");
-			byte[] b = new byte[16384];
+			byte[] b = new byte[1024];
 			int bytesRead;
 			
 			// Decrypt the top bytes
-			byte[] dec = new byte[16388];
+			byte[] dec = new byte[1028];
 			if(is.read(dec, 0, dec.length) != -1) {
 				dec = tea.decrypt(dec);
 				bos.write(dec, 0, dec.length);
@@ -320,11 +331,11 @@ public class Map implements Parcelable {
 		try {
 			final FileOutputStream os = c.openFileOutput(getFilename(), Context.MODE_WORLD_READABLE);
 			final InputStream is = c.openFileInput(getFilename() + ".enc");
-			byte[] b = new byte[16384];
+			byte[] b = new byte[1024];
 			int bytesRead;
 			
 			// Decrypt the top bytes
-			byte[] dec = new byte[16388];
+			byte[] dec = new byte[1028];
 			if(is.read(dec, 0, dec.length) != -1) {
 				dec = tea.decrypt(dec);
 				os.write(dec, 0, dec.length);
@@ -378,6 +389,8 @@ public class Map implements Parcelable {
 		out.writeDouble(lon_per_pixel);
 		out.writeString(polygon_points);
 		out.writeString(description);
+		out.writeInt(width);
+		out.writeInt(height);
 	}
 	
 	/**
@@ -395,6 +408,8 @@ public class Map implements Parcelable {
 		lon_per_pixel = in.readDouble();
 		polygon_points = in.readString();
 		description = in.readString();
+		width = in.readInt();
+		height = in.readInt();
 	}
 
 	

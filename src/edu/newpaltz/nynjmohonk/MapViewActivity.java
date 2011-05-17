@@ -68,7 +68,7 @@ public class MapViewActivity extends Activity {
     	//byte [] decryptedFile = myMap.getDecryptedImage(this);
     	try {
     		//mapBitmap = BitmapFactory.decodeByteArray(decryptedFile, 0, decryptedFile.length);
-    		mapBitmap = Bitmap.createBitmap(3023, 1889, Bitmap.Config.RGB_565);
+    		mapBitmap = Bitmap.createBitmap(myMap.getWidth(), myMap.getHeight(), Bitmap.Config.RGB_565);
     		//decryptedFile = null;
         	myMapView.setImageBitmap(mapBitmap);
         	myMapView.setMapObj(myMap);
@@ -210,7 +210,9 @@ public class MapViewActivity extends Activity {
         		}
         		double longitude = location.getLongitude();
         		double latitude = location.getLatitude();
-        		if(location.hasBearing()) myMapView.setBearing(location.getBearing());
+        		if(location.hasBearing()) {
+        			myMapView.setBearing(location.getBearing());
+        		}
         		// In this method we want to update our image to reflect the change in location
         		curLatitude = latitude;
         		curLongitude = longitude;
@@ -286,10 +288,11 @@ public class MapViewActivity extends Activity {
      * @param x Calculated x pixel
      * @param y Calculated y pixel
      */
+    /*
     private boolean inPolygonRange(double x, double y) {
     	int realY = myMapView.getDrawable().getMinimumHeight() - (int)y;
     	return myMap.getPolygon().contains((int)x, (int)realY); // may lose value on cast
-    }
+    }*/
     
     /**
      * This is an inner class thread that is executed after a given time (currently 60 seconds) and checks if the
