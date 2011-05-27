@@ -261,15 +261,8 @@ public class Map implements Parcelable {
 				int nRead;
 	
 				byte[] data = new byte[1024];
-				boolean encrypted = false;
 				while((nRead = is.read(data, 0, data.length)) != -1) {
-					if(!encrypted) {
-						byte[] enc = tea.encrypt(data);
-						f.write(enc, 0, enc.length);
-						encrypted = true;
-					} else {
-						f.write(data, 0, nRead);
-					}
+					f.write(data, 0, nRead);
 					//f.flush();
 				}
 				
@@ -294,8 +287,6 @@ public class Map implements Parcelable {
 		tea = new TEA(getEkey().getBytes());
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		try {
-			/*File file = new File(Environment.getExternalStorageDirectory() + "/" + getFilename() + ".enc");
-			InputStream is = new FileInputStream(file);*/
 			final InputStream is = c.openFileInput(getFilename() + ".enc");
 			byte[] b = new byte[1024];
 			int bytesRead;
