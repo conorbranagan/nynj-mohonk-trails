@@ -209,7 +209,7 @@ public class MapDatabaseHelper extends SQLiteOpenHelper {
 	public static void downloadDB(Context c) {	
 		DB_PATH = "/data/data/" + c.getApplicationContext().getPackageName() + "/databases/";
 		dbLoadState = 3;
-		String downloadURL = "http://iphone.squid890.webfactional.com/maps.sqlite";
+		String downloadURL = c.getString(R.string.database_url);
 		HttpGet httpRequest = null;
 		String dbFilename = DB_PATH + DB_NAME;
 

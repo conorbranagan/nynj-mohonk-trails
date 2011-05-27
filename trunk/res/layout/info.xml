@@ -13,41 +13,11 @@
 		android:layout_height="wrap_content"
 	/>
 	<ImageView
-		android:id="@+id/icon"
-		android:layout_width="50px"
-		android:layout_height="50px"
-		android:src="@drawable/nynjtc_icon" 
-		android:layout_below="@id/information"
-		android:paddingLeft="10dp"		
-	/>
-	<TextView
-		android:id="@+id/nynjconf"
-		android:text="@string/title"
-		android:textSize="8pt"
-		android:textColor="#000000"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_toRightOf="@id/icon"
-		android:layout_below="@id/information"
-		android:paddingLeft="10dp"		
-	/>
-	<TextView
-		android:id="@+id/nynj_website"
-		android:text="@string/website"
-		android:textSize="8pt"
-		android:autoLink="web"
-		android:textColor="#000000"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_below="@id/nynjconf"
-		android:paddingLeft="75px"
-	/>
-	<ImageView
 		android:id="@+id/nplogo"
 		android:layout_width="50px"
 		android:layout_height="50px"
 		android:src="@drawable/nplogo" 
-		android:layout_below="@id/nynj_website"
+		android:layout_below="@id/information"
 		android:paddingLeft="10dp"		
 	/>
 	<TextView
@@ -58,7 +28,7 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_toRightOf="@id/nplogo"
-		android:layout_below="@id/nynj_website"
+		android:layout_below="@id/information"
 		android:paddingLeft="10dp"		
 	/>
 	<TextView

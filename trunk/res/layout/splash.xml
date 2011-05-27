@@ -17,22 +17,6 @@
 		android:background="#3cb371"
 		android:layout_gravity="center"
 		/>
-	<ImageView
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_gravity="center"
-		android:src="@drawable/nynjtc_icon" 
-		/>
-	<TextView  
-    	android:layout_width="fill_parent" 
-    	android:layout_height="wrap_content" 
-    	android:textColor="#FFFFFF"
-    	android:textSize="10pt"
-    	android:layout_gravity="center_horizontal|top"
-    	android:paddingLeft="45px"
-    	android:paddingRight="45px"
-    	android:text="@string/title"
-    	/>
     <TextView  
     	android:layout_width="fill_parent" 
     	android:layout_height="wrap_content" 
